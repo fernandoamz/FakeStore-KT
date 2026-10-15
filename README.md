@@ -6,6 +6,7 @@
   <img src="https://img.shields.io/badge/Architecture-Clean%20%2F%20MVVM-green?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Offline%20First-Room%20%2F%20Flow-orange?style=for-the-badge" />
   <img src="https://img.shields.io/badge/DI-Dagger%20Hilt-red?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/AI%20Agentic-Workflow-blueviolet?style=for-the-badge" />
 </p>
 
 A production-ready, feature-complete Android E-Commerce application built with **Kotlin**, **Jetpack Compose**, **Material Design 3**, and **Clean Architecture**. It consumes the public [Fake Store API](https://fakestoreapi.com/) and features a robust **Offline-First** implementation using Room and Kotlin Flows.
@@ -50,6 +51,16 @@ Repository Implementation (Offline-First)
 - **Local Preferences**: Jetpack DataStore Preferences 1.1.3
 - **Image Loading**: Coil 3 (Coil Compose & Network OkHttp)
 - **Navigation**: Jetpack Navigation Compose 2.9.7
+
+---
+
+## 🤖 AI Agentic Development Strategy
+
+This project was engineered and maintained leveraging a rigorous **AI Agentic Development Workflow**:
+- **Structured Planning & Artifacts**: Complex feature implementations are preceded by formal architectural implementation plans and task breakdowns.
+- **Semantic Code Exploration**: Utilizes semantic search tools (`find_declaration`, `find_usages`) for precise symbol resolution across submodules rather than brittle string grepping.
+- **Strict Guardrails & Safety**: File modifications are restricted to specialized IDE editing tools with conflict detection and automated validation checks.
+- **Performance & Architectural Rules**: Enforces Jetpack Compose performance standards (stable keys, `collectAsStateWithLifecycle`, immutable states) and Offline-First principles defined in `AGENTS.md`.
 
 ---
 
