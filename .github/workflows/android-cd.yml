@@ -1,0 +1,72 @@
+name: Android CI/CD & Firebase Distribution
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      distribute_firebase:
+        description: 'Distribute build to Firebase App Distribution'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  build-and-distribute:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Verify Generated APK
+        id: verify_apk
+        run: |
+          APK_PATH=$(find app/build/outputs/apk/debug -name "*.apk" | head -n 1)
+          if [ -f "$APK_PATH" ]; then
+            echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+            echo "Found APK at $APK_PATH"
+          else
+            echo "APK not found!"
+            exit 1
+          fi
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: ${{ steps.verify_apk.outputs.apk_path }}
+
+      - name: Upload to Firebase App Distribution
+        if: |
+          (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+          (github.event_name == 'workflow_dispatch' && inputs.distribute_firebase == true)
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: 'testers'
+          file: ${{ steps.verify_apk.outputs.apk_path }}
+          releaseNotes: |
+            Automated build from GitHub Actions.
+            Commit: ${{ github.sha }}
+            Ref: ${{ github.ref }}
