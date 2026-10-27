@@ -14,3 +14,13 @@
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 .DS_Store
+functions/node_modules/
+functions/.env
+functions/.env.*
+.secret.local
+**/.secret.local
+functions/.secret.local
+!functions/.env.example
+!functions/.secret.local.example
+firebase-debug.log
+firebase-debug.*.log

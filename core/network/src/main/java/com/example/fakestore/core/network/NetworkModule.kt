@@ -4,9 +4,9 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -51,5 +51,30 @@ object NetworkModule {
         retrofit: Retrofit
     ): AuthApi {
         return retrofit.create(AuthApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    @AssistantRetrofit
+    fun provideAssistantRetrofit(
+        @AssistantBaseUrl baseUrl: String
+    ): Retrofit {
+        val normalized = when {
+            baseUrl.isBlank() -> "https://example.invalid/"
+            baseUrl.endsWith("/") -> baseUrl
+            else -> "$baseUrl/"
+        }
+        return Retrofit.Builder()
+            .baseUrl(normalized)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideAssistantApi(
+        @AssistantRetrofit retrofit: Retrofit
+    ): AssistantApi {
+        return retrofit.create(AssistantApi::class.java)
     }
 }

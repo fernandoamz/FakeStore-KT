@@ -4,7 +4,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,7 +37,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -317,148 +315,142 @@ fun ProductsScreen(
             }
         }
 
-        // Transparent Action Sheet / Bottom Sheet with crisp black outline borders
         if (showAddressBottomSheet) {
             val successState = uiState as? ProductsUiState.Success
             ModalBottomSheet(
                 onDismissRequest = { showAddressBottomSheet = false },
                 sheetState = sheetState,
-                containerColor = Color.Transparent
+                containerColor = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                tonalElevation = 0.dp,
+                dragHandle = {
+                    Surface(
+                        modifier = Modifier
+                            .padding(vertical = 12.dp)
+                            .size(width = 40.dp, height = 4.dp),
+                        shape = RoundedCornerShape(2.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    ) {}
+                }
             ) {
-                Surface(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .padding(bottom = 24.dp),
-                    shape = RoundedCornerShape(28.dp),
-                    color = Color.White.copy(alpha = 0.96f),
-                    border = BorderStroke(1.5.dp, Color.Black),
-                    shadowElevation = 8.dp
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 28.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    Text(
+                        text = "Elige una dirección",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        // Title
-                        Text(
-                            text = "Elige una dirección",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
-                        )
-
-                        // Selected Address Item Row with black outline border
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = Color.Transparent,
-                            border = BorderStroke(1.dp, Color.Black),
-                            modifier = Modifier.fillMaxWidth()
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(14.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                RadioButton(
-                                    selected = true,
-                                    onClick = {}
-                                )
+                            RadioButton(
+                                selected = true,
+                                onClick = {}
+                            )
 
-                                Column(
-                                    modifier = Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    Text(
+                                        text = successState?.userAddress?.substringBefore(",")
+                                            ?: "Calle Punta Caracol 9",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = MaterialTheme.colorScheme.secondaryContainer
                                     ) {
                                         Text(
-                                            text = successState?.userAddress?.substringBefore(",") ?: "Calle Punta Caracol 9",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.Black
-                                        )
-
-                                        Surface(
-                                            shape = RoundedCornerShape(12.dp),
-                                            color = Color.Transparent,
-                                            border = BorderStroke(1.dp, Color.Black)
-                                        ) {
-                                            Text(
-                                                text = "Ubicación actual",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                fontWeight = FontWeight.Medium,
-                                                color = Color.Black,
-                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                            text = "Ubicación actual",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            modifier = Modifier.padding(
+                                                horizontal = 8.dp,
+                                                vertical = 3.dp
                                             )
-                                        }
+                                        )
                                     }
-
-                                    Text(
-                                        text = "CP: ${successState?.userZipcode ?: "28869"} - ${successState?.userAddress?.substringAfter(",")?.trim() ?: "Manzanillo, Colima"}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.DarkGray
-                                    )
                                 }
 
-                                IconButton(onClick = {}) {
-                                    Icon(
-                                        imageVector = Icons.Default.MoreVert,
-                                        contentDescription = "Más opciones",
-                                        tint = Color.Black
-                                    )
-                                }
+                                Text(
+                                    text = "CP: ${successState?.userZipcode ?: "28869"} - ${
+                                        successState?.userAddress?.substringAfter(",")?.trim()
+                                            ?: "Manzanillo, Colima"
+                                    }",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            IconButton(onClick = {}) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "Más opciones",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                         }
+                    }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { showAddressBottomSheet = false },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2563EB),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                    ) {
+                        Text(
+                            text = "Confirmar",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
 
-                        // Primary Button with black border
-                        Button(
-                            onClick = { showAddressBottomSheet = false },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF2563EB),
-                                contentColor = Color.White
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(1.dp, Color.Black),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp)
-                        ) {
-                            Text(
-                                text = "Confirmar",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        // Secondary Button with black border
-                        OutlinedButton(
-                            onClick = { showAddressBottomSheet = false },
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Color(0xFF2563EB),
-                                containerColor = Color.Transparent
-                            ),
-                            border = BorderStroke(1.5.dp, Color.Black),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp)
-                        ) {
-                            Text(
-                                text = "Agregar nueva dirección",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { showAddressBottomSheet = false },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                    ) {
+                        Text(
+                            text = "Agregar nueva dirección",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
