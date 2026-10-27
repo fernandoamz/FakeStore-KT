@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,80 +36,56 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-
-data class BannerOffer(
-    val badge: String,
-    val title: String,
-    val subtitle: String,
-    val imageUrl: String,
-    val startColor: Color,
-    val endColor: Color,
-    val categorySlug: String
-)
-
-val SampleBanners = listOf(
-    BannerOffer(
-        badge = "HASTA 40% OFF",
-        title = "Colección de Belleza",
-        subtitle = "Renueva tu estilo con los mejores productos.",
-        imageUrl = "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=500",
-        startColor = Color(0xFF1E3A8A),
-        endColor = Color(0xFF3B82F6),
-        categorySlug = "beauty"
-    ),
-    BannerOffer(
-        badge = "NUEVOS LANZAMIENTOS",
-        title = "Tecnología & Gadgets",
-        subtitle = "Potencia tu día a día con dispositivos premium.",
-        imageUrl = "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500",
-        startColor = Color(0xFF0F172A),
-        endColor = Color(0xFF475569),
-        categorySlug = "smartphones"
-    ),
-    BannerOffer(
-        badge = "ENVÍO GRATIS",
-        title = "Laptops & Cómputo",
-        subtitle = "Rendimiento máximo para trabajo y juegos.",
-        imageUrl = "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500",
-        startColor = Color(0xFF78350F),
-        endColor = Color(0xFFD97706),
-        categorySlug = "laptops"
-    )
-)
+import com.example.fakestore.domain.model.Product
+import kotlinx.coroutines.delay
 
 @Composable
 fun HeroBanner(
-    offers: List<BannerOffer> = SampleBanners,
-    onExploreClick: (String) -> Unit = {}
+    products: List<Product>,
+    onProductClick: (Int) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val pagerState = rememberPagerState(pageCount = { offers.size })
+    if (products.isEmpty()) return
+
+    val pagerState = rememberPagerState(pageCount = { products.size })
+
+    LaunchedEffect(products, pagerState.pageCount) {
+        if (products.size <= 1) return@LaunchedEffect
+        while (true) {
+            delay(4_000)
+            val next = (pagerState.currentPage + 1) % products.size
+            pagerState.animateScrollToPage(next)
+        }
+    }
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxWidth()
         ) { page ->
-            val offer = offers[page]
+            val product = products[page]
+            val accent = sliderAccentFor(page)
 
             Card(
-                onClick = { onExploreClick(offer.categorySlug) },
+                onClick = { onProductClick(product.id) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(170.dp),
-                shape = RoundedCornerShape(0.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
                             brush = Brush.horizontalGradient(
-                                colors = listOf(offer.startColor, offer.endColor)
+                                colors = listOf(accent.first, accent.second)
                             )
                         )
                         .padding(20.dp)
@@ -124,13 +101,17 @@ fun HeroBanner(
                                 .fillMaxHeight(),
                             verticalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Surface(
                                     shape = RoundedCornerShape(4.dp),
                                     color = Color.White.copy(alpha = 0.25f)
                                 ) {
                                     Text(
-                                        text = offer.badge,
+                                        text = if (product.discountPercentage > 0) {
+                                            "HASTA ${product.discountPercentage.toInt()}% OFF"
+                                        } else {
+                                            product.category.uppercase()
+                                        },
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White,
@@ -139,30 +120,32 @@ fun HeroBanner(
                                 }
 
                                 Text(
-                                    text = offer.title,
+                                    text = product.title,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+
+                                Text(
+                                    text = "$${"%.2f".format(product.price)}",
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White
                                 )
-
-                                Text(
-                                    text = offer.subtitle,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White.copy(alpha = 0.9f),
-                                    maxLines = 2
-                                )
                             }
 
                             Button(
-                                onClick = { onExploreClick(offer.categorySlug) },
+                                onClick = { onProductClick(product.id) },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color.White,
-                                    contentColor = offer.startColor
+                                    contentColor = accent.first
                                 ),
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Text(
-                                    text = "Ver más",
+                                    text = "Ver producto",
                                     fontWeight = FontWeight.Bold,
                                     style = MaterialTheme.typography.labelMedium
                                 )
@@ -180,17 +163,19 @@ fun HeroBanner(
                             modifier = Modifier
                                 .size(110.dp)
                                 .background(
-                                    color = Color.White.copy(alpha = 0.1f),
+                                    color = Color.White.copy(alpha = 0.15f),
                                     shape = RoundedCornerShape(12.dp)
                                 )
                                 .clip(RoundedCornerShape(12.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             AsyncImage(
-                                model = offer.imageUrl,
-                                contentDescription = offer.title,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
+                                model = product.image,
+                                contentDescription = product.title,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(8.dp),
+                                contentScale = ContentScale.Fit
                             )
                         }
                     }
@@ -198,7 +183,6 @@ fun HeroBanner(
             }
         }
 
-        // Pager Indicator Dots
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -206,7 +190,7 @@ fun HeroBanner(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            repeat(offers.size) { index ->
+            repeat(products.size) { index ->
                 val isSelected = pagerState.currentPage == index
                 Box(
                     modifier = Modifier
@@ -221,4 +205,16 @@ fun HeroBanner(
             }
         }
     }
+}
+
+private fun sliderAccentFor(index: Int): Pair<Color, Color> {
+    val accents = listOf(
+        Color(0xFF1E3A8A) to Color(0xFF3B82F6),
+        Color(0xFF0F172A) to Color(0xFF475569),
+        Color(0xFF78350F) to Color(0xFFD97706),
+        Color(0xFF14532D) to Color(0xFF22C55E),
+        Color(0xFF7F1D1D) to Color(0xFFEF4444),
+        Color(0xFF4C1D95) to Color(0xFF8B5CF6)
+    )
+    return accents[index % accents.size]
 }

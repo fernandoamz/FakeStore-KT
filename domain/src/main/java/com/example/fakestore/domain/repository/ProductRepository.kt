@@ -17,4 +17,5 @@ interface ProductRepository {
     suspend fun getCategories(): List<String>
     suspend fun refreshProducts(): Result<Unit>
     suspend fun fetchProductsPage(limit: Int = 10, skip: Int = 0): Result<ProductsPageResult>
+    suspend fun fetchProductsByCategory(category: String): Result<ProductsPageResult>
 }

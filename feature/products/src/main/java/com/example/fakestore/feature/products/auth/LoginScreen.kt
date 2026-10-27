@@ -77,6 +77,7 @@ fun LoginScreen(
     }
 
     Scaffold(
+        contentWindowInsets = com.example.fakestore.feature.products.components.scaffoldSafeDrawingInsets(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->

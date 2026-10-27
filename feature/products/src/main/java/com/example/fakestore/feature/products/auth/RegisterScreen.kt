@@ -80,6 +80,7 @@ fun RegisterScreen(
     }
 
     Scaffold(
+        contentWindowInsets = com.example.fakestore.feature.products.components.scaffoldTopBarOnlyInsets(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {

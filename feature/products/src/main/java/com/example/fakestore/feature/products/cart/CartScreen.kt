@@ -43,17 +43,22 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.example.fakestore.domain.model.CartItem
+import com.example.fakestore.feature.products.components.AppBottomBar
+import com.example.fakestore.feature.products.components.BottomTab
+import com.example.fakestore.feature.products.components.ScaffoldZeroInsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartScreen(
     onBackClick: () -> Unit,
     onCheckoutClick: () -> Unit,
+    onTabSelected: (BottomTab) -> Unit = {},
     viewModel: CartViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
+        contentWindowInsets = ScaffoldZeroInsets,
         topBar = {
             TopAppBar(
                 title = {
@@ -88,11 +93,18 @@ fun CartScreen(
             )
         },
         bottomBar = {
-            if (uiState.items.isNotEmpty()) {
-                CartSummaryBottomBar(
-                    totalItems = uiState.totalItems,
-                    totalPrice = uiState.totalPrice,
-                    onCheckoutClick = onCheckoutClick
+            Column(modifier = Modifier.fillMaxWidth()) {
+                if (uiState.items.isNotEmpty()) {
+                    CartSummaryBottomBar(
+                        totalItems = uiState.totalItems,
+                        totalPrice = uiState.totalPrice,
+                        onCheckoutClick = onCheckoutClick
+                    )
+                }
+                AppBottomBar(
+                    currentRoute = BottomTab.CART.route,
+                    cartItemCount = uiState.totalItems,
+                    onTabSelected = onTabSelected
                 )
             }
         }
@@ -102,7 +114,7 @@ fun CartScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
-                onBrowseClick = onBackClick
+                onBrowseClick = { onTabSelected(BottomTab.HOME) }
             )
         } else {
             LazyColumn(

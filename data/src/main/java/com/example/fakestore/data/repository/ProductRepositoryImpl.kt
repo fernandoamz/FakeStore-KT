@@ -17,6 +17,7 @@ import com.example.fakestore.domain.repository.ProductRepository
 import com.example.fakestore.domain.repository.ProductsPageResult
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class ProductRepositoryImpl @Inject constructor(
@@ -93,6 +94,42 @@ class ProductRepositoryImpl @Inject constructor(
             )
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    override suspend fun fetchProductsByCategory(category: String): Result<ProductsPageResult> {
+        return try {
+            val response = productsApi.getProductsByCategory(category)
+            val products = response.products.map { it.toDomain() }
+            val entities = products.map { ProductEntity.fromDomain(it) }
+
+            database.withTransaction {
+                productDao.insertProducts(entities)
+            }
+
+            Result.success(
+                ProductsPageResult(
+                    products = products,
+                    total = response.total,
+                    skip = response.skip,
+                    limit = response.limit
+                )
+            )
+        } catch (e: Exception) {
+            val cached = productDao.getProductsByCategory(category).first()
+                .map { it.toDomain() }
+            if (cached.isNotEmpty()) {
+                Result.success(
+                    ProductsPageResult(
+                        products = cached,
+                        total = cached.size,
+                        skip = 0,
+                        limit = cached.size
+                    )
+                )
+            } else {
+                Result.failure(e)
+            }
         }
     }
 

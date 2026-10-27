@@ -16,7 +16,9 @@ sealed interface ProductsUiState {
         val skip: Int = 0,
         val limit: Int = 10,
         val isLoadingMore: Boolean = false,
-        val hasMorePages: Boolean = true
+        val hasMorePages: Boolean = true,
+        val userZipcode: String = "28869",
+        val userAddress: String = ""
     ) : ProductsUiState
 
     data class Error(

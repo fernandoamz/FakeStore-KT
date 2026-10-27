@@ -50,6 +50,7 @@ fun CategoriesScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
+        contentWindowInsets = com.example.fakestore.feature.products.components.scaffoldTopBarOnlyInsets(),
         topBar = {
             TopAppBar(
                 title = {

@@ -43,6 +43,7 @@ fun OrderConfirmationScreen(
     onBackToStoreClick: () -> Unit
 ) {
     Scaffold(
+        contentWindowInsets = com.example.fakestore.feature.products.components.scaffoldTopBarOnlyInsets(),
         topBar = {
             TopAppBar(
                 title = {

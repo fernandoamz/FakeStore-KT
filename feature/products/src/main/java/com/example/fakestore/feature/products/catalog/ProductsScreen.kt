@@ -19,44 +19,41 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.AddShoppingCart
-import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,11 +69,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.example.fakestore.domain.model.Product
 import com.example.fakestore.feature.products.cart.CartViewModel
-import com.example.fakestore.feature.products.components.AppBottomBar
 import com.example.fakestore.feature.products.components.BottomTab
 import com.example.fakestore.feature.products.components.HeroBanner
 import com.example.fakestore.feature.products.components.ProductCardSkeleton
 import com.example.fakestore.feature.products.components.RatingBar
+import com.example.fakestore.feature.products.components.ScaffoldZeroInsets
+import com.example.fakestore.feature.products.components.YellowECommerceHeader
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -86,13 +84,25 @@ fun ProductsScreen(
     cartViewModel: CartViewModel = hiltViewModel(),
     onProductClick: (Int) -> Unit,
     onTabSelected: (BottomTab) -> Unit,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    onCameraClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val categories by viewModel.categories.collectAsStateWithLifecycle()
     val cartUiState by cartViewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
+
+    var showAddressBottomSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
+
+    // Determine collapse state for YellowECommerceHeader based on scroll offset with derivedStateOf
+    val isCollapsed by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 30
+        }
+    }
 
     // Automatic Infinite Scroll Pagination Trigger
     LaunchedEffect(listState, uiState) {
@@ -116,60 +126,40 @@ fun ProductsScreen(
     }
 
     Scaffold(
+        contentWindowInsets = ScaffoldZeroInsets,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ShoppingBag,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "FakeStore",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+            YellowECommerceHeader(
+                searchQuery = when (uiState) {
+                    is ProductsUiState.Success -> (uiState as ProductsUiState.Success).searchQuery
+                    else -> ""
                 },
-                navigationIcon = {
-                    IconButton(onClick = onProfileClick) {
-                        Icon(
-                            imageVector = Icons.Outlined.Person,
-                            contentDescription = "Mi Perfil"
-                        )
-                    }
+                onSearchQueryChange = viewModel::onSearchQueryChange,
+                selectedCategory = when (uiState) {
+                    is ProductsUiState.Success -> (uiState as ProductsUiState.Success).selectedCategory
+                    else -> null
                 },
-                actions = {
-                    IconButton(onClick = { onTabSelected(BottomTab.CART) }) {
-                        BadgedBox(
-                            badge = {
-                                if (cartUiState.totalItems > 0) {
-                                    Badge {
-                                        Text("${cartUiState.totalItems}")
-                                    }
-                                }
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.ShoppingCart,
-                                contentDescription = "Ver Carrito"
-                            )
-                        }
-                    }
+                categories = categories,
+                onCategorySelected = { category ->
+                    viewModel.selectCategory(category)
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                )
+                isCollapsed = isCollapsed,
+                onProfileClick = onProfileClick,
+                onNotificationClick = {
+                    scope.launch { snackbarHostState.showSnackbar("7 notificaciones nuevas") }
+                },
+                onLocationClick = {
+                    showAddressBottomSheet = true
+                },
+                onCameraClick = onCameraClick,
+                userZipcode = when (uiState) {
+                    is ProductsUiState.Success -> (uiState as ProductsUiState.Success).userZipcode
+                    else -> ""
+                }
             )
         },
         bottomBar = {
-            AppBottomBar(
+            com.example.fakestore.feature.products.components.AppBottomBar(
                 currentRoute = BottomTab.HOME.route,
                 cartItemCount = cartUiState.totalItems,
                 onTabSelected = onTabSelected
@@ -222,126 +212,30 @@ fun ProductsScreen(
             }
 
             is ProductsUiState.Success -> {
+                // Keep a stable random set once products are available (same frame, no delay).
+                val sliderProducts = remember(state.products.isNotEmpty()) {
+                    if (state.products.isEmpty()) emptyList()
+                    else state.products.shuffled().take(6)
+                }
+
                 LazyColumn(
                     state = listState,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding),
-                    contentPadding = PaddingValues(bottom = 16.dp),
+                    contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // 1. Slim & Minimalist Search Bar
-                    item(key = "search_bar") {
-                        OutlinedTextField(
-                            value = state.searchQuery,
-                            onValueChange = viewModel::onSearchQueryChange,
-                            placeholder = {
-                                Text(
-                                    "Buscar en la tienda...",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                                )
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.Search,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            },
-                            trailingIcon = {
-                                if (state.searchQuery.isNotEmpty()) {
-                                    IconButton(
-                                        onClick = { viewModel.onSearchQueryChange("") },
-                                        modifier = Modifier.size(32.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Outlined.Clear,
-                                            contentDescription = "Limpiar búsqueda",
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                }
-                            },
-                            singleLine = true,
-                            shape = RoundedCornerShape(24.dp),
-                            textStyle = MaterialTheme.typography.bodyMedium,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                                focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                                unfocusedBorderColor = Color.Transparent
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 4.dp)
-                        )
-                    }
-
-                    // 2. Full-width Hero Banner Slider (Only shown on "Todos" view)
-                    if (state.selectedCategory == null && state.searchQuery.isEmpty()) {
+                    // First card: random products slider (only on "All")
+                    if (state.selectedCategory == null &&
+                        state.searchQuery.isEmpty() &&
+                        sliderProducts.isNotEmpty()
+                    ) {
                         item(key = "hero_banner") {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 6.dp)
-                            ) {
-                                HeroBanner(
-                                    onExploreClick = { viewModel.selectCategory(state.categories.firstOrNull()) }
-                                )
-                            }
-                        }
-                    }
-
-                    // 3. STICKY Category Pills
-                    if (state.categories.isNotEmpty()) {
-                        stickyHeader(key = "category_chips") {
-                            Surface(
-                                modifier = Modifier.fillMaxWidth(),
-                                color = MaterialTheme.colorScheme.background,
-                                shadowElevation = 2.dp
-                            ) {
-                                LazyRow(
-                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    item {
-                                        SlimCategoryPill(
-                                            label = "Todos",
-                                            isSelected = state.selectedCategory == null,
-                                            onClick = { viewModel.selectCategory(null) }
-                                        )
-                                    }
-
-                                    item {
-                                        SlimCategoryPill(
-                                            label = "Favoritos",
-                                            isSelected = state.selectedCategory == "__FAVORITES__",
-                                            onClick = { viewModel.selectCategory("__FAVORITES__") },
-                                            icon = {
-                                                Icon(
-                                                    imageVector = Icons.Filled.Favorite,
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(16.dp),
-                                                    tint = if (state.selectedCategory == "__FAVORITES__") Color.White else Color(0xFFEF4444)
-                                                )
-                                            }
-                                        )
-                                    }
-
-                                    items(
-                                        items = state.categories,
-                                        key = { it }
-                                    ) { category ->
-                                        SlimCategoryPill(
-                                            label = category.replaceFirstChar { it.uppercase() },
-                                            isSelected = state.selectedCategory == category,
-                                            onClick = { viewModel.selectCategory(category) }
-                                        )
-                                    }
-                                }
-                            }
+                            HeroBanner(
+                                products = sliderProducts,
+                                onProductClick = onProductClick
+                            )
                         }
                     }
 
@@ -362,15 +256,13 @@ fun ProductsScreen(
                             }
                         }
                     } else {
-                        // 4. Products Chunked in Rows of 2 with stable keys
+                        // Products Chunked in Rows of 2 with stable keys
                         items(
                             items = state.filteredProducts.chunked(2),
                             key = { row -> row.joinToString("_") { it.id.toString() } }
                         ) { rowProducts ->
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
+                                modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 for (product in rowProducts) {
@@ -397,7 +289,7 @@ fun ProductsScreen(
                             }
                         }
 
-                        // 5. Automatic Infinite Scroll Loading Indicator (at bottom)
+                        // Automatic Infinite Scroll Loading Indicator (at bottom)
                         if (state.isLoadingMore && state.hasMorePages && state.selectedCategory == null && state.searchQuery.isEmpty()) {
                             item(key = "infinite_scroll_loading") {
                                 Box(
@@ -424,36 +316,152 @@ fun ProductsScreen(
                 }
             }
         }
-    }
-}
 
-@Composable
-private fun SlimCategoryPill(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    icon: @Composable (() -> Unit)? = null
-) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
-        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh,
-        border = if (!isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)) else null,
-        shadowElevation = if (isSelected) 3.dp else 0.dp,
-        modifier = Modifier.height(36.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            icon?.invoke()
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        // Transparent Action Sheet / Bottom Sheet with crisp black outline borders
+        if (showAddressBottomSheet) {
+            val successState = uiState as? ProductsUiState.Success
+            ModalBottomSheet(
+                onDismissRequest = { showAddressBottomSheet = false },
+                sheetState = sheetState,
+                containerColor = Color.Transparent
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .padding(bottom = 24.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    color = Color.White.copy(alpha = 0.96f),
+                    border = BorderStroke(1.5.dp, Color.Black),
+                    shadowElevation = 8.dp
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        // Title
+                        Text(
+                            text = "Elige una dirección",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+
+                        // Selected Address Item Row with black outline border
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color.Transparent,
+                            border = BorderStroke(1.dp, Color.Black),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = true,
+                                    onClick = {}
+                                )
+
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Text(
+                                            text = successState?.userAddress?.substringBefore(",") ?: "Calle Punta Caracol 9",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.Black
+                                        )
+
+                                        Surface(
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = Color.Transparent,
+                                            border = BorderStroke(1.dp, Color.Black)
+                                        ) {
+                                            Text(
+                                                text = "Ubicación actual",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.Medium,
+                                                color = Color.Black,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Text(
+                                        text = "CP: ${successState?.userZipcode ?: "28869"} - ${successState?.userAddress?.substringAfter(",")?.trim() ?: "Manzanillo, Colima"}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.DarkGray
+                                    )
+                                }
+
+                                IconButton(onClick = {}) {
+                                    Icon(
+                                        imageVector = Icons.Default.MoreVert,
+                                        contentDescription = "Más opciones",
+                                        tint = Color.Black
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Primary Button with black border
+                        Button(
+                            onClick = { showAddressBottomSheet = false },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF2563EB),
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, Color.Black),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp)
+                        ) {
+                            Text(
+                                text = "Confirmar",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        // Secondary Button with black border
+                        OutlinedButton(
+                            onClick = { showAddressBottomSheet = false },
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = Color(0xFF2563EB),
+                                containerColor = Color.Transparent
+                            ),
+                            border = BorderStroke(1.5.dp, Color.Black),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp)
+                        ) {
+                            Text(
+                                text = "Agregar nueva dirección",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                }
+            }
         }
     }
 }
@@ -541,7 +549,7 @@ private fun ProductCard(
                 Text(
                     text = product.title,
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     minLines = 2,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -583,7 +591,7 @@ private fun ProductCard(
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.AddShoppingCart,
-                            contentDescription = "Añadir rápido",
+                            contentDescription = "Anadir rapido",
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }

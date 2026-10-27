@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -73,6 +74,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.fakestore.feature.products.components.ScaffoldZeroInsets
 import coil3.compose.AsyncImage
 import com.example.fakestore.feature.products.cart.CartViewModel
 import com.example.fakestore.feature.products.components.ProductReviewsComponent
@@ -100,6 +102,7 @@ fun ProductDetailScreen(
     }
 
     Scaffold(
+        contentWindowInsets = ScaffoldZeroInsets,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
@@ -169,7 +172,9 @@ fun ProductDetailScreen(
                 val product = state.product
 
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding(),
                     shadowElevation = 8.dp,
                     color = MaterialTheme.colorScheme.surfaceContainer
                 ) {

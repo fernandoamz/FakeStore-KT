@@ -46,6 +46,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.fakestore.feature.products.components.scaffoldTopBarOnlyInsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,6 +64,7 @@ fun ProfileScreen(
     }
 
     Scaffold(
+        contentWindowInsets = scaffoldTopBarOnlyInsets(),
         topBar = {
             TopAppBar(
                 title = {
