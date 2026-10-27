@@ -2,11 +2,13 @@ package com.example.fakestore.data.di
 
 import com.example.fakestore.data.repository.AuthRepositoryImpl
 import com.example.fakestore.data.repository.CartRepositoryImpl
+import com.example.fakestore.data.repository.FavoritesRepositoryImpl
 import com.example.fakestore.data.repository.ProductRepositoryImpl
 import com.example.fakestore.data.repository.SessionRepositoryImpl
 import com.example.fakestore.data.repository.UserRepositoryImpl
 import com.example.fakestore.domain.repository.AuthRepository
 import com.example.fakestore.domain.repository.CartRepository
+import com.example.fakestore.domain.repository.FavoritesRepository
 import com.example.fakestore.domain.repository.ProductRepository
 import com.example.fakestore.domain.repository.SessionRepository
 import com.example.fakestore.domain.repository.UserRepository
@@ -49,4 +51,10 @@ abstract class RepositoryModule {
     abstract fun bindSessionRepository(
         implementation: SessionRepositoryImpl
     ): SessionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindFavoritesRepository(
+        implementation: FavoritesRepositoryImpl
+    ): FavoritesRepository
 }

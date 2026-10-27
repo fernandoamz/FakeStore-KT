@@ -16,11 +16,11 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.fakestore.MainViewModel
 import com.example.fakestore.domain.model.OrderResult
-import com.example.fakestore.feature.products.catalog.ProductDetailScreen
-import com.example.fakestore.feature.products.catalog.ProductsScreen
 import com.example.fakestore.feature.products.auth.LoginScreen
 import com.example.fakestore.feature.products.auth.RegisterScreen
 import com.example.fakestore.feature.products.cart.CartScreen
+import com.example.fakestore.feature.products.catalog.ProductDetailScreen
+import com.example.fakestore.feature.products.catalog.ProductsScreen
 import com.example.fakestore.feature.products.categories.CategoriesScreen
 import com.example.fakestore.feature.products.checkout.CheckoutScreen
 import com.example.fakestore.feature.products.checkout.OrderConfirmationScreen
@@ -51,7 +51,7 @@ fun AppNavigation(
         composable("login") {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate("profile") {
+                    navController.navigate("products") {
                         popUpTo("login") { inclusive = true }
                     }
                 },

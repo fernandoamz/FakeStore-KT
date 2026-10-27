@@ -34,8 +34,8 @@ class LoginViewModel @Inject constructor(
     fun useTestCredentials() {
         _uiState.update {
             it.copy(
-                username = "johnd",
-                password = "m38rmF$",
+                username = "emilys",
+                password = "emilyspass",
                 errorMessage = null
             )
         }

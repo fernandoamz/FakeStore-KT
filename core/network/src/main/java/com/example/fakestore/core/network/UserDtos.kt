@@ -4,19 +4,14 @@ data class UserDto(
     val id: Int,
     val email: String,
     val username: String,
-    val name: NameDto?,
-    val address: AddressDto?,
-    val phone: String?
-)
-
-data class NameDto(
-    val firstname: String?,
-    val lastname: String?
+    val firstName: String?,
+    val lastName: String?,
+    val phone: String?,
+    val address: AddressDto?
 )
 
 data class AddressDto(
+    val address: String?,
     val city: String?,
-    val street: String?,
-    val number: Int?,
-    val zipcode: String?
+    val postalCode: String?
 )

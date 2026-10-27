@@ -3,77 +3,93 @@ package com.example.fakestore.feature.products.catalog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fakestore.domain.model.Product
+import com.example.fakestore.domain.repository.FavoritesRepository
+import com.example.fakestore.domain.repository.ProductRepository
 import com.example.fakestore.domain.usecase.GetCategoriesUseCase
-import com.example.fakestore.domain.usecase.GetProductsByCategoryUseCase
-import com.example.fakestore.domain.usecase.GetProductsUseCase
-import com.example.fakestore.domain.usecase.RefreshProductsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalCoroutinesApi::class)
+private data class StateTuple(
+    val categories: List<String>,
+    val isLoadingInitial: Boolean,
+    val isLoadingMore: Boolean,
+    val error: String?,
+    val total: Int
+)
+
 @HiltViewModel
 class ProductsViewModel @Inject constructor(
-    private val getProductsUseCase: GetProductsUseCase,
-    private val getProductsByCategoryUseCase: GetProductsByCategoryUseCase,
+    private val productRepository: ProductRepository,
     private val getCategoriesUseCase: GetCategoriesUseCase,
-    private val refreshProductsUseCase: RefreshProductsUseCase
+    private val favoritesRepository: FavoritesRepository
 ) : ViewModel() {
 
+    private val _allProducts = MutableStateFlow<List<Product>>(emptyList())
     private val _selectedCategory = MutableStateFlow<String?>(null)
     private val _searchQuery = MutableStateFlow("")
-    private val _isRefreshing = MutableStateFlow(false)
     private val _categories = MutableStateFlow<List<String>>(emptyList())
-    private val _favoriteProductIds = MutableStateFlow<Set<Int>>(emptySet())
+    private val _total = MutableStateFlow(0)
+    private val _skip = MutableStateFlow(0)
+    private val _limit = 10
+    private val _isLoadingInitial = MutableStateFlow(true)
+    private val _isLoadingMore = MutableStateFlow(false)
     private val _error = MutableStateFlow<String?>(null)
 
     val uiState: StateFlow<ProductsUiState> = combine(
-        _selectedCategory.flatMapLatest { category ->
-            if (category == null) {
-                getProductsUseCase()
-            } else {
-                getProductsByCategoryUseCase(category)
-            }
-        },
+        _allProducts,
         _selectedCategory,
         _searchQuery,
-        _isRefreshing
-    ) { products, selectedCategory, searchQuery, isRefreshing ->
-        val filtered = filterProducts(products, searchQuery)
-        Triple(products, filtered, isRefreshing)
-    }.combine(
-        combine(_categories, _favoriteProductIds, _error) { cats, favs, err ->
-            Triple(cats, favs, err)
+        favoritesRepository.favoriteProductIds
+    ) { products, selectedCategory, searchQuery, favorites ->
+        val activeCategoryProducts = if (selectedCategory == "__FAVORITES__") {
+            products.filter { favorites.contains(it.id) }
+        } else if (selectedCategory != null) {
+            products.filter { it.category.equals(selectedCategory, ignoreCase = true) }
+        } else {
+            products
         }
-    ) { (products, filtered, isRefreshing), (categories, favorites, error) ->
-        ProductsUiState(
-            isLoading = products.isEmpty() && isRefreshing,
-            products = products,
-            filteredProducts = filtered,
-            categories = categories,
-            selectedCategory = _selectedCategory.value,
-            searchQuery = _searchQuery.value,
-            favoriteProductIds = favorites,
-            isRefreshing = isRefreshing,
-            error = error
-        )
+        val filtered = filterProducts(activeCategoryProducts, searchQuery)
+        Triple(products, filtered, favorites)
+    }.combine(
+        combine(_categories, _isLoadingInitial, _isLoadingMore, _error, _total) { categories, isLoadingInitial, isLoadingMore, error, total ->
+            StateTuple(categories, isLoadingInitial, isLoadingMore, error, total)
+        }
+    ) { (products, filtered, favorites), (categories, isLoadingInitial, isLoadingMore, error, total) ->
+        if (isLoadingInitial && products.isEmpty() && error == null) {
+            ProductsUiState.Loading
+        } else if (error != null && products.isEmpty()) {
+            ProductsUiState.Error(error)
+        } else {
+            val hasMore = products.size < total
+            ProductsUiState.Success(
+                products = products,
+                filteredProducts = filtered,
+                categories = categories,
+                selectedCategory = _selectedCategory.value,
+                searchQuery = _searchQuery.value,
+                favoriteProductIds = favorites,
+                total = total,
+                skip = _skip.value,
+                limit = _limit,
+                isLoadingMore = isLoadingMore,
+                hasMorePages = hasMore
+            )
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = ProductsUiState(isLoading = true)
+        initialValue = ProductsUiState.Loading
     )
 
     init {
         loadCategories()
-        refresh()
+        loadInitialProducts()
     }
 
     private fun loadCategories() {
@@ -85,20 +101,56 @@ class ProductsViewModel @Inject constructor(
         }
     }
 
-    fun refresh() {
+    fun loadInitialProducts() {
         viewModelScope.launch {
-            _isRefreshing.value = true
+            _isLoadingInitial.value = true
             _error.value = null
-            val result = refreshProductsUseCase()
-            result.onFailure { exception ->
-                _error.value = exception.message ?: "No se pudo actualizar. Mostrando datos guardados."
+            _skip.value = 0
+
+            val result = productRepository.fetchProductsPage(limit = _limit, skip = 0)
+            result.onSuccess { pageResult ->
+                _allProducts.value = pageResult.products
+                _total.value = pageResult.total
+                _skip.value = pageResult.skip
+                _isLoadingInitial.value = false
+            }.onFailure { exception ->
+                productRepository.getProducts().collect { cached ->
+                    if (cached.isNotEmpty()) {
+                        _allProducts.value = cached
+                        _total.value = cached.size
+                        _isLoadingInitial.value = false
+                    } else {
+                        _error.value = exception.message ?: "Error al cargar los productos."
+                        _isLoadingInitial.value = false
+                    }
+                }
             }
-            _isRefreshing.value = false
+        }
+    }
+
+    fun loadMoreProducts() {
+        val currentProducts = _allProducts.value
+        if (_isLoadingMore.value || currentProducts.size >= _total.value) return
+
+        viewModelScope.launch {
+            _isLoadingMore.value = true
+            val nextSkip = currentProducts.size
+            val result = productRepository.fetchProductsPage(limit = _limit, skip = nextSkip)
+
+            result.onSuccess { pageResult ->
+                val newProducts = (currentProducts + pageResult.products).distinctBy { it.id }
+                _allProducts.value = newProducts
+                _total.value = pageResult.total
+                _skip.value = pageResult.skip
+                _isLoadingMore.value = false
+            }.onFailure {
+                _isLoadingMore.value = false
+            }
         }
     }
 
     fun loadData() {
-        refresh()
+        loadInitialProducts()
     }
 
     fun selectCategory(category: String?) {
@@ -111,14 +163,8 @@ class ProductsViewModel @Inject constructor(
     }
 
     fun toggleFavorite(productId: Int) {
-        _favoriteProductIds.update { favorites ->
-            val mutable = favorites.toMutableSet()
-            if (mutable.contains(productId)) {
-                mutable.remove(productId)
-            } else {
-                mutable.add(productId)
-            }
-            mutable
+        viewModelScope.launch {
+            favoritesRepository.toggleFavorite(productId)
         }
     }
 

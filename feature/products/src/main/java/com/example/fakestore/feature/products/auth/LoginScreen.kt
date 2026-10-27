@@ -137,7 +137,7 @@ fun LoginScreen(
             // Quick Test Credentials Assist Chip
             AssistChip(
                 onClick = { viewModel.useTestCredentials() },
-                label = { Text("⚡ Probar cuenta (johnd / m38rmF$)") },
+                label = { Text("⚡ Probar cuenta (emilys / emilyspass)") },
                 colors = AssistChipDefaults.assistChipColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     labelColor = MaterialTheme.colorScheme.primary
@@ -155,7 +155,7 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = uiState.username,
                     onValueChange = viewModel::onUsernameChange,
-                    label = { Text("Usuario (ej. johnd)") },
+                    label = { Text("Usuario (ej. emilys)") },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Outlined.PersonOutline,

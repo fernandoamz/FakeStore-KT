@@ -117,9 +117,8 @@ class CartRepositoryImpl @Inject constructor(
             val response = cartApi.createCart(
                 CreateCartRequestDto(
                     userId = 1,
-                    date = dateString,
                     products = currentList.map {
-                        CartProductDto(productId = it.product.id, quantity = it.quantity)
+                        CartProductDto(id = it.product.id, quantity = it.quantity)
                     }
                 )
             )
@@ -129,7 +128,7 @@ class CartRepositoryImpl @Inject constructor(
             Result.success(
                 OrderResult(
                     id = response.id,
-                    date = response.date,
+                    date = dateString,
                     totalItems = totalItems,
                     totalPrice = totalPrice
                 )

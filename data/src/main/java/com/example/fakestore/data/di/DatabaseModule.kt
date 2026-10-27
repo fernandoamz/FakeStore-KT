@@ -24,7 +24,9 @@ object DatabaseModule {
             context,
             FakeStoreDatabase::class.java,
             FakeStoreDatabase.DATABASE_NAME
-        ).fallbackToDestructiveMigration().build()
+        )
+        .fallbackToDestructiveMigration()
+        .build()
     }
 
     @Provides

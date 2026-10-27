@@ -12,7 +12,7 @@ interface UserApi {
         @Path("id") id: Int
     ): UserDto
 
-    @POST("users")
+    @POST("users/add")
     suspend fun registerUser(
         @Body request: RegisterRequestDto
     ): RegisterResponseDto
