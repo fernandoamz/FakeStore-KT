@@ -181,7 +181,7 @@ fun LLMScreen(
 
             if (!isKeyboardOpen) {
                 AppBottomBar(
-                    currentRoute = BottomTab.LLM.route,
+                    currentRoute = BottomTab.MELI.route,
                     cartItemCount = cartUiState.totalItems,
                     onTabSelected = onTabSelected
                 )

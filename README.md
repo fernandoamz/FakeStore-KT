@@ -6,11 +6,11 @@
   <img src="https://img.shields.io/badge/Architecture-Clean%20%2F%20MVVM-green?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Offline%20First-Room%20%2F%20Flow-orange?style=for-the-badge" />
   <img src="https://img.shields.io/badge/API-DummyJSON-yellow?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Assistant-Firebase%20Functions-red?style=for-the-badge&logo=firebase" />
-  <img src="https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blueviolet?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/AI-Google%20LiteRT-blueviolet?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue?style=for-the-badge" />
 </p>
 
-Android e-commerce app built with **Kotlin**, **Jetpack Compose**, **Material 3**, and **Clean Architecture**. It uses the [DummyJSON API](https://dummyjson.com/) with an **Offline-First** Room + Flow data layer, plus an **IA shopping assistant** proxied through Firebase Functions (OpenAI key stays server-side).
+Android e-commerce app built with **Kotlin**, **Jetpack Compose**, **Material 3**, and **Clean Architecture**. It uses the [DummyJSON API](https://dummyjson.com/) with an **Offline-First** Room + Flow data layer, **Google LiteRT** on-device AI visual search, and an **AI shopping assistant** proxied through Firebase Functions.
 
 ---
 
@@ -20,9 +20,9 @@ Android e-commerce app built with **Kotlin**, **Jetpack Compose**, **Material 3*
 - **Hero banner slider**: Full-width carousel with featured products and category jumps.
 - **Product detail**: Image gallery, discounts, stock, reviews, specs (SKU, barcode, dimensions, weight, tags), and store policies.
 - **Cart & checkout**: Cart management, multi-step checkout with address from DummyJSON users, and order confirmation (`POST /carts/add`).
-- **IA shopping assistant**: Bottom-tab **Asistente** chat that recommends and compares catalog products. Replies render light markdown (bold, lists). Starter suggestions adapt to available categories.
+- **📷 On-Device AI Visual Search (Google LiteRT & CameraX)**: Real-time product recognition and object detection supporting YOLO11 (`.tflite`) models directly on edge devices. Scan items with the camera to instantly jump to product details.
+- **IA shopping assistant**: Bottom-tab **Meli AI** chat that recommends and compares catalog products. Replies render light markdown (bold, lists). Starter suggestions adapt to available categories.
 - **Voice input**: Mic on the assistant input bar uses system speech-to-text (`RECORD_AUDIO` + `RecognizerIntent`, Spanish).
-- **Camera**: Custom CameraX capture flow (flip, flash, gallery) from catalog / assistant actions.
 - **CP / address sheet**: Tap **CP** in the header to open a full-width bottom sheet and confirm delivery address.
 - **Session & guest mode**: DataStore session, guest browsing by default, profile and logout.
 - **Offline-First**: Room is the source of truth; Retrofit syncs when online.
@@ -56,7 +56,7 @@ Repository Implementation (Offline-First)
 - **Preferences**: DataStore Preferences 1.1.3
 - **Images**: Coil 3
 - **Navigation**: Navigation Compose 2.9.7
-- **Camera**: CameraX
+- **Camera & AI**: CameraX & Google LiteRT (Lite Runtime) / TFLite (YOLO11 `.tflite` support)
 - **Assistant backend**: Firebase Functions (2nd gen) + OpenAI (`gpt-4o-mini`) via Secret Manager
 - **CI/CD**: GitHub Actions & Firebase App Distribution
 
@@ -93,7 +93,7 @@ FakeStore/
 
 ### Optional: enable the IA assistant
 
-Without this, the rest of the app still runs; only the Asistente tab needs the function URL.
+Without this, the rest of the app still runs; only the Meli AI tab needs the function URL.
 
 1. Follow [Assistant (Firebase Functions)](docs/assistant-firebase.md) to deploy `assistantChat` and set `OPENAI_API_KEY` in Secret Manager.
 2. Add to **local** `local.properties` (never commit this file):

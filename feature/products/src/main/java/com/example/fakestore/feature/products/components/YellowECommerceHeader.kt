@@ -1,5 +1,6 @@
 package com.example.fakestore.feature.products.components
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -43,7 +45,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 val BrightYellow = Color(0xFFFFE600)
 val DarkCharcoal = Color(0xFF1F1F1F)
@@ -59,8 +60,7 @@ fun YellowECommerceHeader(
     onProfileClick: () -> Unit,
     onNotificationClick: () -> Unit,
     onLocationClick: () -> Unit,
-    onCameraClick: () -> Unit,
-    userZipcode: String,
+    onCameraClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -71,11 +71,11 @@ fun YellowECommerceHeader(
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Top Row: Avatar, Search Input, Notification Bell
+        // Top Row: Avatar, Search Input, Standalone Camera Button, Notification Bell
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             // User Profile Avatar / Initials
             Surface(
@@ -94,7 +94,7 @@ fun YellowECommerceHeader(
                 }
             }
 
-            // Search Input with rounded corners, search icon & camera icon
+            // Search Input with rounded corners & search icon
             Surface(
                 shape = RoundedCornerShape(24.dp),
                 color = Color.White,
@@ -103,55 +103,67 @@ fun YellowECommerceHeader(
                     .weight(1f)
                     .height(42.dp)
             ) {
-                Row(
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxSize()
                         .padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    contentAlignment = Alignment.CenterStart
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Buscar",
-                        tint = Color.Gray,
-                        modifier = Modifier.size(20.dp)
-                    )
-
-                    Box(
-                        modifier = Modifier.weight(1f),
-                        contentAlignment = Alignment.CenterStart
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        if (searchQuery.isEmpty()) {
-                            Text(
-                                text = "Buscar en Fake Store",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.Gray
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Buscar",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(20.dp)
+                        )
+
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            if (searchQuery.isEmpty()) {
+                                Text(
+                                    text = "Buscar en Fake Store",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.Gray
+                                )
+                            }
+                            BasicTextField(
+                                value = searchQuery,
+                                onValueChange = onSearchQueryChange,
+                                singleLine = true,
+                                textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.Black),
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
-                        BasicTextField(
-                            value = searchQuery,
-                            onValueChange = onSearchQueryChange,
-                            singleLine = true,
-                            textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.Black),
-                            modifier = Modifier.fillMaxWidth()
-                        )
                     }
-
-                    Icon(
-                        imageVector = Icons.Default.CameraAlt,
-                        contentDescription = "Abrir cámara",
-                        tint = Color.Gray,
-                        modifier = Modifier
-                            .size(20.dp)
-                            .clickable(onClick = onCameraClick)
-                    )
                 }
+            }
+
+            // Standalone Camera Icon Button (Independent touch target)
+            IconButton(
+                onClick = {
+                    Log.d("YellowECommerceHeader", "Camera icon clicked!")
+                    onCameraClick()
+                },
+                modifier = Modifier.size(38.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CameraAlt,
+                    contentDescription = "Escanear",
+                    tint = Color.Black,
+                    modifier = Modifier.size(22.dp)
+                )
             }
 
             // Notification bell with badge count (e.g. 7)
             IconButton(
                 onClick = onNotificationClick,
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(38.dp)
             ) {
                 BadgedBox(
                     badge = {
@@ -195,20 +207,26 @@ fun YellowECommerceHeader(
                         modifier = Modifier.size(18.dp)
                     )
                     Text(
-                        text = "CP $userZipcode",
+                        text = "CP 28869  >",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
-                        color = DarkCharcoal,
-                        letterSpacing = 0.5.sp
+                        color = DarkCharcoal
                     )
                 }
 
-                // Category bar from backend (DummyJSON category-list / product categories)
+                // Category Bar: Horizontal scrollable row of text-based category chips/links with active bottom indicator line
+                val displayCategories = if (categories.isEmpty()) {
+                    listOf("Electronics", "Fashion", "Home", "Beauty", "Sports", "More")
+                } else {
+                    categories.map { it.replaceFirstChar { c -> c.uppercase() } }
+                }
+
                 LazyRow(
                     contentPadding = PaddingValues(vertical = 2.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    item(key = "all") {
+                    // "All" category option
+                    item {
                         val isAllSelected = selectedCategory == null
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -236,26 +254,19 @@ fun YellowECommerceHeader(
                         }
                     }
 
-                    items(
-                        items = categories,
-                        key = { it }
-                    ) { category ->
+                    items(displayCategories) { category ->
                         val isSelected = selectedCategory.equals(category, ignoreCase = true)
-                        val displayName = category
-                            .replace("-", " ")
-                            .replaceFirstChar { c -> if (c.isLowerCase()) c.titlecase() else c.toString() }
-
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(4.dp))
                                 .clickable {
-                                    onCategorySelected(if (isSelected) null else category)
+                                    onCategorySelected(if (isSelected) null else category.lowercase())
                                 }
                                 .padding(vertical = 4.dp, horizontal = 2.dp)
                         ) {
                             Text(
-                                text = displayName,
+                                text = category,
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                 color = DarkCharcoal.copy(alpha = if (isSelected) 1.0f else 0.8f)

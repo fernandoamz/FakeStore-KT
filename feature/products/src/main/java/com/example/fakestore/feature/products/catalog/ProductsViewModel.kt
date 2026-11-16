@@ -17,6 +17,32 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+private data class ProductSlice(
+    val catalog: List<Product>,
+    val categoryProducts: List<Product>,
+    val selectedCategory: String?,
+    val searchQuery: String,
+    val favorites: Set<Int>
+)
+
+private data class MetaSlice(
+    val categories: List<String>,
+    val isLoadingInitial: Boolean,
+    val isLoadingMore: Boolean,
+    val isLoadingCategory: Boolean,
+    val error: String?,
+    val total: Int,
+    val userZipcode: String,
+    val userAddress: String
+)
+
+private data class Quadruple<A, B, C, D>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D
+)
+
 @HiltViewModel
 class ProductsViewModel @Inject constructor(
     private val productRepository: ProductRepository,
@@ -40,25 +66,6 @@ class ProductsViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     private val _userZipcode = MutableStateFlow("28869")
     private val _userAddress = MutableStateFlow("626 Main Street, Phoenix (CP: 85001)")
-
-    private data class ProductSlice(
-        val catalog: List<Product>,
-        val categoryProducts: List<Product>,
-        val selectedCategory: String?,
-        val searchQuery: String,
-        val favorites: Set<Int>
-    )
-
-    private data class MetaSlice(
-        val categories: List<String>,
-        val isLoadingInitial: Boolean,
-        val isLoadingMore: Boolean,
-        val isLoadingCategory: Boolean,
-        val error: String?,
-        val total: Int,
-        val userZipcode: String,
-        val userAddress: String
-    )
 
     val uiState: StateFlow<ProductsUiState> = combine(
         combine(
@@ -133,8 +140,40 @@ class ProductsViewModel @Inject constructor(
 
     init {
         loadCategories()
-        loadInitialProducts()
+        observeLocalProducts()
+        syncRemoteProducts()
         loadUserProfile()
+    }
+
+    private fun observeLocalProducts() {
+        viewModelScope.launch {
+            productRepository.getProducts().collect { localProducts ->
+                if (localProducts.isNotEmpty() && _catalogProducts.value.isEmpty()) {
+                    _catalogProducts.value = localProducts
+                    _total.value = localProducts.size
+                    _isLoadingInitial.value = false
+                    syncCategoriesFromProducts()
+                }
+            }
+        }
+    }
+
+    private fun syncRemoteProducts() {
+        viewModelScope.launch {
+            val result = productRepository.fetchProductsPage(limit = _limit, skip = 0)
+            result.onSuccess { pageResult ->
+                _catalogProducts.value = pageResult.products
+                _total.value = pageResult.total
+                _skip.value = pageResult.skip
+                _isLoadingInitial.value = false
+                syncCategoriesFromProducts()
+            }.onFailure { exception ->
+                if (_catalogProducts.value.isEmpty()) {
+                    _error.value = exception.message ?: "Error al cargar los productos."
+                    _isLoadingInitial.value = false
+                }
+            }
+        }
     }
 
     private fun loadCategories() {
@@ -179,32 +218,7 @@ class ProductsViewModel @Inject constructor(
     }
 
     fun loadInitialProducts() {
-        viewModelScope.launch {
-            _isLoadingInitial.value = true
-            _error.value = null
-            _skip.value = 0
-
-            val result = productRepository.fetchProductsPage(limit = _limit, skip = 0)
-            result.onSuccess { pageResult ->
-                _catalogProducts.value = pageResult.products
-                _total.value = pageResult.total
-                _skip.value = pageResult.skip
-                _isLoadingInitial.value = false
-                syncCategoriesFromProducts()
-            }.onFailure { exception ->
-                productRepository.getProducts().collect { cached ->
-                    if (cached.isNotEmpty()) {
-                        _catalogProducts.value = cached
-                        _total.value = cached.size
-                        _isLoadingInitial.value = false
-                        syncCategoriesFromProducts()
-                    } else {
-                        _error.value = exception.message ?: "Error al cargar los productos."
-                        _isLoadingInitial.value = false
-                    }
-                }
-            }
-        }
+        syncRemoteProducts()
     }
 
     fun loadMoreProducts() {
@@ -287,10 +301,3 @@ class ProductsViewModel @Inject constructor(
         }
     }
 }
-
-private data class Quadruple<A, B, C, D>(
-    val first: A,
-    val second: B,
-    val third: C,
-    val fourth: D
-)
