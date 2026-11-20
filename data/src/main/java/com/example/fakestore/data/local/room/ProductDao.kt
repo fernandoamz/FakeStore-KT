@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.example.fakestore.domain.model.Product
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -23,4 +24,7 @@ interface ProductDao {
 
     @Query("DELETE FROM products")
     suspend fun clearAllProducts()
+
+    @Query("SELECT * FROM products WHERE title LIKE '%' || :query || '%' OR description LIKE '%' || :query || '%'")
+    suspend fun searchProductsLocal(query: String): List<ProductEntity>
 }

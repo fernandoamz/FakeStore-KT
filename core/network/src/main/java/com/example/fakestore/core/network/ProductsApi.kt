@@ -24,6 +24,11 @@ interface ProductsApi {
     suspend fun getProductsByCategory(
         @Path("category") category: String
     ): ProductsResponseDto
+
+    @GET("products/search")
+    suspend fun searchProducts(
+        @Query("q") query: String
+    ): ProductsResponseDto
 }
 
 data class ProductsResponseDto(
