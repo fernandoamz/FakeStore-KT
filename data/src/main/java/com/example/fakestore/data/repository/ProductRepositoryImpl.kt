@@ -133,6 +133,27 @@ class ProductRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun searchProducts(query: String): List<Product> {
+        return try {
+            // 1. Try to search in the remote api (Retrofit)
+            val response = productsApi.searchProducts(query)
+            val products = response.products.map { it.toDomain() }
+            val entities = products.map { ProductEntity.fromDomain(it) }
+
+            // 2. persist the results in the local database (Room)
+            database.withTransaction {
+                productDao.insertProducts(entities)
+            }
+
+            // 3. Return the results
+            products
+        } catch (e: Exception) {
+            // 4. If the remote api call fails, try to fetch the results from the local database
+            val localEntities = productDao.searchProductsLocal(query)
+            localEntities.map { it.toDomain() }
+        }
+    }
+
     private fun ProductDto.toDomain() =
         Product(
             id = id,

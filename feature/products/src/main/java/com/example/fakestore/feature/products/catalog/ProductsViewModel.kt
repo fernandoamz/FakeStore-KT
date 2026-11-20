@@ -7,6 +7,7 @@ import com.example.fakestore.domain.repository.FavoritesRepository
 import com.example.fakestore.domain.repository.ProductRepository
 import com.example.fakestore.domain.usecase.GetCategoriesUseCase
 import com.example.fakestore.domain.usecase.GetUserProfileUseCase
+import com.example.fakestore.domain.usecase.SearchProductsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 
 private data class ProductSlice(
     val catalog: List<Product>,
@@ -48,7 +54,8 @@ class ProductsViewModel @Inject constructor(
     private val productRepository: ProductRepository,
     private val getCategoriesUseCase: GetCategoriesUseCase,
     private val getUserProfileUseCase: GetUserProfileUseCase,
-    private val favoritesRepository: FavoritesRepository
+    private val favoritesRepository: FavoritesRepository,
+    private val searchProductsUseCase: SearchProductsUseCase
 ) : ViewModel() {
 
     private val _catalogProducts = MutableStateFlow<List<Product>>(emptyList())
@@ -143,6 +150,7 @@ class ProductsViewModel @Inject constructor(
         observeLocalProducts()
         syncRemoteProducts()
         loadUserProfile()
+        observeSearchQuery()
     }
 
     private fun observeLocalProducts() {
@@ -298,6 +306,29 @@ class ProductsViewModel @Inject constructor(
             it.title.contains(query, ignoreCase = true) ||
                     it.category.contains(query, ignoreCase = true) ||
                     it.description.contains(query, ignoreCase = true)
+        }
+    }
+
+    private val  _searchResults = MutableStateFlow<List<Product>>(emptyList())
+    val searchResults: StateFlow<List<Product>> = _searchResults.asStateFlow()
+
+    private fun observeSearchQuery() {
+        viewModelScope.launch {
+            _searchQuery
+                .debounce(300L)
+                .distinctUntilChanged()
+                .flatMapLatest { query ->
+                    if (query.isBlank()){
+                        flowOf(emptyList())
+                    } else {
+                        flow {
+                            emit(searchProductsUseCase(query = query))
+                        }
+                    }
+                }
+                .collect { results ->
+                    _searchResults.value = results
+                }
         }
     }
 }
