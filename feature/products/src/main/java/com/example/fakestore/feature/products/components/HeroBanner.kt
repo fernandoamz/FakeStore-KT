@@ -29,6 +29,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,13 +51,14 @@ fun HeroBanner(
 ) {
     if (products.isEmpty()) return
 
-    val pagerState = rememberPagerState(pageCount = { products.size })
+    val bannerProducts = remember(products) { products.take(5) }
+    val pagerState = rememberPagerState(pageCount = { bannerProducts.size })
 
-    LaunchedEffect(products, pagerState.pageCount) {
-        if (products.size <= 1) return@LaunchedEffect
+    LaunchedEffect(bannerProducts, pagerState.pageCount) {
+        if (bannerProducts.size <= 1) return@LaunchedEffect
         while (true) {
             delay(4_000)
-            val next = (pagerState.currentPage + 1) % products.size
+            val next = (pagerState.currentPage + 1) % bannerProducts.size
             pagerState.animateScrollToPage(next)
         }
     }
@@ -69,7 +71,7 @@ fun HeroBanner(
             state = pagerState,
             modifier = Modifier.fillMaxWidth()
         ) { page ->
-            val product = products[page]
+            val product = bannerProducts[page]
             val accent = sliderAccentFor(page)
 
             Card(
@@ -190,7 +192,7 @@ fun HeroBanner(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            repeat(products.size) { index ->
+            repeat(bannerProducts.size) { index ->
                 val isSelected = pagerState.currentPage == index
                 Box(
                     modifier = Modifier

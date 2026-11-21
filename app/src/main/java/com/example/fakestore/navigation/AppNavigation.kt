@@ -80,7 +80,13 @@ fun AppNavigation(
                     navController.navigate("product/$productId")
                 },
                 onTabSelected = { tab ->
-                    if (tab.route != "products") {
+                    if (tab.route == "profile") {
+                        if (isLoggedInState == true) {
+                            navController.navigate("profile")
+                        } else {
+                            navController.navigate("login")
+                        }
+                    } else if (tab.route != "products") {
                         navController.navigate(tab.route)
                     }
                 },
@@ -100,7 +106,13 @@ fun AppNavigation(
                     navController.navigate("product/$productId")
                 },
                 onTabSelected = { tab ->
-                    if (tab.route != "videos") {
+                    if (tab.route == "profile") {
+                        if (isLoggedInState == true) {
+                            navController.navigate("profile")
+                        } else {
+                            navController.navigate("login")
+                        }
+                    } else if (tab.route != "videos") {
                         navController.navigate(tab.route)
                     }
                 },
@@ -120,25 +132,18 @@ fun AppNavigation(
                     navController.popBackStack()
                 },
                 onTabSelected = { tab ->
-                    if (tab.route != "llm") {
+                    if (tab.route == "profile") {
+                        if (isLoggedInState == true) {
+                            navController.navigate("profile")
+                        } else {
+                            navController.navigate("login")
+                        }
+                    } else if (tab.route != "llm") {
                         navController.navigate(tab.route)
                     }
                 },
                 onCameraClick = {
                     navController.navigate("camera")
-                }
-            )
-        }
-
-        composable("camera") {
-            CameraScreen(
-                onBackClick = {
-                    navController.popBackStack()
-                },
-                onProductRecognized = { productId ->
-                    navController.navigate("product/$productId") {
-                        popUpTo("products")
-                    }
                 }
             )
         }
@@ -149,7 +154,7 @@ fun AppNavigation(
                     navController.popBackStack()
                 },
                 onLogoutSuccess = {
-                    navController.navigate("products") {
+                    navController.navigate("login") {
                         popUpTo("profile") { inclusive = true }
                     }
                 }
@@ -185,6 +190,14 @@ fun AppNavigation(
                 },
                 onCheckoutClick = {
                     navController.navigate("checkout")
+                },
+                onTabSelected = { tab ->
+                    if (tab.route != "cart") {
+                        navController.navigate(tab.route) {
+                            popUpTo("products")
+                            launchSingleTop = true
+                        }
+                    }
                 }
             )
         }

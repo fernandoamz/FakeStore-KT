@@ -1,5 +1,6 @@
 package com.example.fakestore.feature.products.catalog
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fakestore.domain.model.Product
@@ -7,7 +8,6 @@ import com.example.fakestore.domain.repository.FavoritesRepository
 import com.example.fakestore.domain.repository.ProductRepository
 import com.example.fakestore.domain.usecase.GetCategoriesUseCase
 import com.example.fakestore.domain.usecase.GetUserProfileUseCase
-import com.example.fakestore.domain.usecase.SearchProductsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,11 +17,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 
 private data class ProductSlice(
     val catalog: List<Product>,
@@ -55,12 +50,12 @@ class ProductsViewModel @Inject constructor(
     private val getCategoriesUseCase: GetCategoriesUseCase,
     private val getUserProfileUseCase: GetUserProfileUseCase,
     private val favoritesRepository: FavoritesRepository,
-    private val searchProductsUseCase: SearchProductsUseCase
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val _catalogProducts = MutableStateFlow<List<Product>>(emptyList())
+    private val _allProducts = MutableStateFlow<List<Product>>(emptyList())
     private val _categoryProducts = MutableStateFlow<List<Product>>(emptyList())
-    private val _selectedCategory = MutableStateFlow<String?>(null)
+    private val _selectedCategory = savedStateHandle.getStateFlow<String?>("selected_category", null)
     private val _searchQuery = MutableStateFlow("")
     private val _categories = MutableStateFlow<List<String>>(emptyList())
     val categories: StateFlow<List<String>> = _categories.asStateFlow()
@@ -76,7 +71,7 @@ class ProductsViewModel @Inject constructor(
 
     val uiState: StateFlow<ProductsUiState> = combine(
         combine(
-            _catalogProducts,
+            _allProducts,
             _categoryProducts,
             _selectedCategory,
             _searchQuery,
@@ -115,11 +110,11 @@ class ProductsViewModel @Inject constructor(
                 products.catalog
         }
         val filtered = filterProducts(activeProducts, products.searchQuery)
-        val isBusy = meta.isLoadingInitial || meta.isLoadingCategory
 
-        if (isBusy && activeProducts.isEmpty() && meta.error == null) {
+        // Only show full Loading state on initial load, never when switching categories
+        if (meta.isLoadingInitial && products.catalog.isEmpty() && meta.error == null) {
             ProductsUiState.Loading
-        } else if (meta.error != null && activeProducts.isEmpty() && products.selectedCategory == null) {
+        } else if (meta.error != null && products.catalog.isEmpty() && products.selectedCategory == null) {
             ProductsUiState.Error(meta.error)
         } else {
             val hasMore = products.selectedCategory == null && activeProducts.size < meta.total
@@ -150,14 +145,18 @@ class ProductsViewModel @Inject constructor(
         observeLocalProducts()
         syncRemoteProducts()
         loadUserProfile()
-        observeSearchQuery()
+
+        val savedCat = _selectedCategory.value
+        if (savedCat != null && savedCat != "__FAVORITES__") {
+            loadCategoryProducts(savedCat)
+        }
     }
 
     private fun observeLocalProducts() {
         viewModelScope.launch {
             productRepository.getProducts().collect { localProducts ->
-                if (localProducts.isNotEmpty() && _catalogProducts.value.isEmpty()) {
-                    _catalogProducts.value = localProducts
+                if (localProducts.isNotEmpty() && _allProducts.value.isEmpty()) {
+                    _allProducts.value = localProducts
                     _total.value = localProducts.size
                     _isLoadingInitial.value = false
                     syncCategoriesFromProducts()
@@ -170,13 +169,13 @@ class ProductsViewModel @Inject constructor(
         viewModelScope.launch {
             val result = productRepository.fetchProductsPage(limit = _limit, skip = 0)
             result.onSuccess { pageResult ->
-                _catalogProducts.value = pageResult.products
+                _allProducts.value = pageResult.products
                 _total.value = pageResult.total
                 _skip.value = pageResult.skip
                 _isLoadingInitial.value = false
                 syncCategoriesFromProducts()
             }.onFailure { exception ->
-                if (_catalogProducts.value.isEmpty()) {
+                if (_allProducts.value.isEmpty()) {
                     _error.value = exception.message ?: "Error al cargar los productos."
                     _isLoadingInitial.value = false
                 }
@@ -201,7 +200,7 @@ class ProductsViewModel @Inject constructor(
 
     private fun syncCategoriesFromProducts() {
         if (_categories.value.isNotEmpty()) return
-        val fromProducts = _catalogProducts.value
+        val fromProducts = _allProducts.value
             .map { it.category.trim() }
             .filter { it.isNotEmpty() }
             .distinct()
@@ -231,7 +230,7 @@ class ProductsViewModel @Inject constructor(
 
     fun loadMoreProducts() {
         if (_selectedCategory.value != null) return
-        val currentProducts = _catalogProducts.value
+        val currentProducts = _allProducts.value
         if (_isLoadingMore.value || currentProducts.size >= _total.value) return
 
         viewModelScope.launch {
@@ -241,7 +240,7 @@ class ProductsViewModel @Inject constructor(
 
             result.onSuccess { pageResult ->
                 val newProducts = (currentProducts + pageResult.products).distinctBy { it.id }
-                _catalogProducts.value = newProducts
+                _allProducts.value = newProducts
                 _total.value = pageResult.total
                 _skip.value = pageResult.skip
                 _isLoadingMore.value = false
@@ -261,8 +260,9 @@ class ProductsViewModel @Inject constructor(
     }
 
     fun selectCategory(category: String?) {
-        val next = if (_selectedCategory.value == category) null else category
-        _selectedCategory.value = next
+        val current = _selectedCategory.value
+        val next = if (current == category) null else category
+        savedStateHandle["selected_category"] = next
 
         when {
             next == null || next == "__FAVORITES__" -> {
@@ -277,7 +277,6 @@ class ProductsViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoadingCategory.value = true
             _error.value = null
-            _categoryProducts.value = emptyList()
 
             val result = productRepository.fetchProductsByCategory(category)
             result.onSuccess { pageResult ->
@@ -306,29 +305,6 @@ class ProductsViewModel @Inject constructor(
             it.title.contains(query, ignoreCase = true) ||
                     it.category.contains(query, ignoreCase = true) ||
                     it.description.contains(query, ignoreCase = true)
-        }
-    }
-
-    private val  _searchResults = MutableStateFlow<List<Product>>(emptyList())
-    val searchResults: StateFlow<List<Product>> = _searchResults.asStateFlow()
-
-    private fun observeSearchQuery() {
-        viewModelScope.launch {
-            _searchQuery
-                .debounce(300L)
-                .distinctUntilChanged()
-                .flatMapLatest { query ->
-                    if (query.isBlank()){
-                        flowOf(emptyList())
-                    } else {
-                        flow {
-                            emit(searchProductsUseCase(query = query))
-                        }
-                    }
-                }
-                .collect { results ->
-                    _searchResults.value = results
-                }
         }
     }
 }
