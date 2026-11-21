@@ -19,10 +19,10 @@ Android e-commerce app built with **Kotlin**, **Jetpack Compose**, **Material 3*
 - **Product catalog & infinite scroll**: Search, sticky category pills (including Favorites), and pagination.
 - **Hero banner slider**: Full-width carousel with featured products and category jumps.
 - **Product detail**: Image gallery, discounts, stock, reviews, specs (SKU, barcode, dimensions, weight, tags), and store policies.
-- **Offline-First Cart & Checkout**: Local Room persistence with atomic transactions and background synchronization via `WorkManager` (`CartSyncWorker`) using the Outbox pattern.
-- **Dedicated Search & History**: Independent search screen with real-time reactive pipeline (`debounce`, `distinctUntilChanged`, `flatMapLatest`) and Room-backed persistent search history.
-- **On-Device AI Visual Search (Google LiteRT & CameraX 1.4.1)**: Real-time product recognition and object detection supporting YOLO11 (`.tflite`) models directly on edge devices (fully 16KB page-size compatible for Android 15+).
-- **IA shopping assistant**: Bottom-tab **Chat AI** chat that recommends and compares catalog products (with message persistence in Room).
+- **🛒 Offline-First Cart & Checkout**: Local Room persistence with atomic transactions and background synchronization via `WorkManager` (`CartSyncWorker`) using the Outbox pattern.
+- **🔍 Dedicated Search & History**: Independent search screen with real-time reactive pipeline (`debounce`, `distinctUntilChanged`, `flatMapLatest`) and Room-backed persistent search history.
+- **📷 On-Device AI Visual Search (Google LiteRT & CameraX 1.4.1)**: Real-time product recognition and object detection supporting YOLO11 (`.tflite`) models directly on edge devices (fully 16KB page-size compatible for Android 15+).
+- **IA shopping assistant**: Bottom-tab **Meli AI** chat that recommends and compares catalog products (with message persistence in Room).
 - **Session & secure storage**: Encrypted token storage backed by **Android Keystore & AES-GCM**.
 - **CI/CD**: GitHub Actions builds, runs unit tests, distributes APKs via Firebase App Distribution, and creates automatic GitHub Releases.
 
