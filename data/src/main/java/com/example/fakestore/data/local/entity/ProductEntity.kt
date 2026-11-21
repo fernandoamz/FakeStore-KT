@@ -1,4 +1,4 @@
-package com.example.fakestore.data.local.room
+package com.example.fakestore.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

@@ -26,6 +26,7 @@ import com.example.fakestore.feature.products.checkout.CheckoutScreen
 import com.example.fakestore.feature.products.checkout.OrderConfirmationScreen
 import com.example.fakestore.feature.products.llm.LLMScreen
 import com.example.fakestore.feature.products.profile.ProfileScreen
+import com.example.fakestore.feature.products.search.SearchScreen
 import com.example.fakestore.feature.products.videos.VideosScreen
 
 @Composable
@@ -96,6 +97,12 @@ fun AppNavigation(
                     } else {
                         navController.navigate("login")
                     }
+                },
+                onCameraClick = {
+                    navController.navigate("camera")
+                },
+                onSearchClick = {
+                    navController.navigate("search")
                 }
             )
         }
@@ -144,6 +151,30 @@ fun AppNavigation(
                 },
                 onCameraClick = {
                     navController.navigate("camera")
+                }
+            )
+        }
+
+        composable("search") {
+            SearchScreen(
+                onBackClick = {
+                    navController.popBackStack()
+                },
+                onProductClick = { productId ->
+                    navController.navigate("product/$productId")
+                }
+            )
+        }
+
+        composable("camera") {
+            CameraScreen(
+                onBackClick = {
+                    navController.popBackStack()
+                },
+                onProductRecognized = { productId ->
+                    navController.navigate("product/$productId") {
+                        popUpTo("products")
+                    }
                 }
             )
         }

@@ -84,7 +84,9 @@ fun ProductsScreen(
     cartViewModel: CartViewModel = hiltViewModel(),
     onProductClick: (Int) -> Unit,
     onTabSelected: (BottomTab) -> Unit,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    onCameraClick: () -> Unit = {},
+    onSearchClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val cartUiState by cartViewModel.uiState.collectAsStateWithLifecycle()
@@ -150,7 +152,9 @@ fun ProductsScreen(
                 },
                 onLocationClick = {
                     showAddressBottomSheet = true
-                }
+                },
+                onCameraClick = onCameraClick,
+                onSearchClick = onSearchClick
             )
         },
         bottomBar = {
