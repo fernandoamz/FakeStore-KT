@@ -3,15 +3,18 @@ package com.example.fakestore.data.local.room
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.example.fakestore.data.local.dao.ProductDao
+import com.example.fakestore.data.local.dao.MessageDao
+import com.example.fakestore.data.local.dao.SearchDao
+import com.example.fakestore.data.local.dao.CartDao
 import com.example.fakestore.data.local.entity.ProductEntity
-
 import com.example.fakestore.data.local.entity.MessageEntity
 import com.example.fakestore.data.local.entity.MessageOutboxEntity
-import com.example.fakestore.data.local.dao.MessageDao
 import com.example.fakestore.data.local.entity.SearchCacheEntity
 import com.example.fakestore.data.local.entity.SearchHistoryEntity
 import com.example.fakestore.data.local.entity.SearchQueryResultEntity
-import com.example.fakestore.data.local.dao.SearchDao
+import com.example.fakestore.data.local.entity.CartEntity
+import com.example.fakestore.data.local.entity.CartItemEntity
+import com.example.fakestore.data.local.entity.CartOperationEntity
 
 @Database(
     entities = [
@@ -20,15 +23,19 @@ import com.example.fakestore.data.local.dao.SearchDao
         MessageOutboxEntity::class,
         SearchHistoryEntity::class,
         SearchCacheEntity::class,
-        SearchQueryResultEntity::class
+        SearchQueryResultEntity::class,
+        CartEntity::class,
+        CartItemEntity::class,
+        CartOperationEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class FakeStoreDatabase : RoomDatabase() {
     abstract fun productDao(): ProductDao
     abstract fun messageDao(): MessageDao
     abstract fun searchDao(): SearchDao
+    abstract fun cartDao(): CartDao
 
     companion object {
         const val DATABASE_NAME = "fakestore_db"
