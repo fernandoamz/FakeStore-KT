@@ -6,9 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.fakestore.data"
-    compileSdk {
-        version = release(37)
-    }
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24
@@ -22,9 +20,13 @@ android {
 
 }
 
+tasks.matching { it.name.startsWith("ksp") }.configureEach {
+    dependsOn(":core:network:kspDebugKotlin")
+}
+
 dependencies {
     implementation(project(":domain"))
-    implementation(project(":core:network"))
+    api(project(":core:network"))
     implementation(project(":core:common"))
 
     implementation(libs.androidx.appcompat)
