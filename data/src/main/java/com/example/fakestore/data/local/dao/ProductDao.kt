@@ -1,10 +1,10 @@
-package com.example.fakestore.data.local.room
+package com.example.fakestore.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.example.fakestore.domain.model.Product
+import com.example.fakestore.data.local.entity.ProductEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

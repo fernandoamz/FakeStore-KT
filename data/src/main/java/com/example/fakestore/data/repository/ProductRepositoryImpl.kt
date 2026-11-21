@@ -1,13 +1,11 @@
 package com.example.fakestore.data.repository
 
 import androidx.room.withTransaction
-import com.example.fakestore.core.network.MetaDto
 import com.example.fakestore.core.network.ProductDto
 import com.example.fakestore.core.network.ProductsApi
-import com.example.fakestore.core.network.ReviewDto
 import com.example.fakestore.data.local.room.FakeStoreDatabase
-import com.example.fakestore.data.local.room.ProductDao
-import com.example.fakestore.data.local.room.ProductEntity
+import com.example.fakestore.data.local.dao.ProductDao
+import com.example.fakestore.data.local.entity.ProductEntity
 import com.example.fakestore.domain.model.Dimensions
 import com.example.fakestore.domain.model.Product
 import com.example.fakestore.domain.model.ProductMeta

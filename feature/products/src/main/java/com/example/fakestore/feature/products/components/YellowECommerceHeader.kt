@@ -1,8 +1,13 @@
 package com.example.fakestore.feature.products.components
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +30,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
@@ -44,6 +50,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.fakestore.domain.model.SearchHistory
 
 val BrightYellow = Color(0xFFFFE600)
 val DarkCharcoal = Color(0xFF1F1F1F)
@@ -60,6 +67,10 @@ fun YellowECommerceHeader(
     onNotificationClick: () -> Unit,
     onLocationClick: () -> Unit,
     onCameraClick: () -> Unit = {},
+    onSearchClick: () -> Unit = {},
+    searchHistory: List<SearchHistory> = emptyList(),
+    onHistoryItemClick: (String) -> Unit = {},
+    onClearHistory: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     // Smooth GPU-accelerated collapse progress (0f = expanded, 1f = collapsed)
@@ -83,7 +94,8 @@ fun YellowECommerceHeader(
             onSearchQueryChange = onSearchQueryChange,
             onProfileClick = onProfileClick,
             onCameraClick = onCameraClick,
-            onNotificationClick = onNotificationClick
+            onNotificationClick = onNotificationClick,
+            onSearchClick = onSearchClick
         )
 
         // Subheader & Category Bar with GPU-accelerated alpha & translation (Zero layout jank)
@@ -157,7 +169,8 @@ private fun TopSearchRow(
     onSearchQueryChange: (String) -> Unit,
     onProfileClick: () -> Unit,
     onCameraClick: () -> Unit,
-    onNotificationClick: () -> Unit
+    onNotificationClick: () -> Unit,
+    onSearchClick: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -180,7 +193,9 @@ private fun TopSearchRow(
             }
         }
 
+        // Search Input Surface clickable to open dedicated SearchScreen
         Surface(
+            onClick = onSearchClick,
             shape = RoundedCornerShape(24.dp),
             color = Color.White,
             shadowElevation = 1.dp,
@@ -206,25 +221,12 @@ private fun TopSearchRow(
                         modifier = Modifier.size(20.dp)
                     )
 
-                    Box(
-                        modifier = Modifier.weight(1f),
-                        contentAlignment = Alignment.CenterStart
-                    ) {
-                        if (searchQuery.isEmpty()) {
-                            Text(
-                                text = "Buscar en Fake Store",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.Gray
-                            )
-                        }
-                        BasicTextField(
-                            value = searchQuery,
-                            onValueChange = onSearchQueryChange,
-                            singleLine = true,
-                            textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.Black),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                    Text(
+                        text = if (searchQuery.isEmpty()) "Buscar en Fake Store" else searchQuery,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (searchQuery.isEmpty()) Color.Gray else Color.Black,
+                        maxLines = 1
+                    )
                 }
             }
         }

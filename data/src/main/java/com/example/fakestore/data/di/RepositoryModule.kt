@@ -14,6 +14,8 @@ import com.example.fakestore.domain.repository.FavoritesRepository
 import com.example.fakestore.domain.repository.ProductRepository
 import com.example.fakestore.domain.repository.SessionRepository
 import com.example.fakestore.domain.repository.UserRepository
+import com.example.fakestore.data.repository.SearchHistoryRepositoryImpl
+import com.example.fakestore.domain.repository.SearchHistoryRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -65,4 +67,10 @@ abstract class RepositoryModule {
     abstract fun bindAssistantRepository(
         implementation: AssistantRepositoryImpl
     ): AssistantRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSearchHistoryRepository(
+        impl: SearchHistoryRepositoryImpl
+    ): SearchHistoryRepository
 }

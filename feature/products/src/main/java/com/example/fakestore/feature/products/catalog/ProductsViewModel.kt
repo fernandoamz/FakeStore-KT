@@ -4,10 +4,15 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fakestore.domain.model.Product
+import com.example.fakestore.domain.model.SearchHistory
 import com.example.fakestore.domain.repository.FavoritesRepository
 import com.example.fakestore.domain.repository.ProductRepository
+import com.example.fakestore.domain.usecase.ClearSearchHistoryUseCase
+import com.example.fakestore.domain.usecase.DeleteSearchHistoryUseCase
 import com.example.fakestore.domain.usecase.GetCategoriesUseCase
+import com.example.fakestore.domain.usecase.GetSearchHistoryUseCase
 import com.example.fakestore.domain.usecase.GetUserProfileUseCase
+import com.example.fakestore.domain.usecase.SaveSearchHistoryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,6 +54,10 @@ class ProductsViewModel @Inject constructor(
     private val productRepository: ProductRepository,
     private val getCategoriesUseCase: GetCategoriesUseCase,
     private val getUserProfileUseCase: GetUserProfileUseCase,
+    private val getSearchHistoryUseCase: GetSearchHistoryUseCase,
+    private val saveSearchHistoryUseCase: SaveSearchHistoryUseCase,
+    private val clearSearchHistoryUseCase: ClearSearchHistoryUseCase,
+    private val deleteSearchHistoryUseCase: DeleteSearchHistoryUseCase,
     private val favoritesRepository: FavoritesRepository,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -68,6 +77,13 @@ class ProductsViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     private val _userZipcode = MutableStateFlow("28869")
     private val _userAddress = MutableStateFlow("626 Main Street, Phoenix (CP: 85001)")
+
+    val searchHistory: StateFlow<List<SearchHistory>> = getSearchHistoryUseCase()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
 
     val uiState: StateFlow<ProductsUiState> = combine(
         combine(
@@ -111,7 +127,6 @@ class ProductsViewModel @Inject constructor(
         }
         val filtered = filterProducts(activeProducts, products.searchQuery)
 
-        // Only show full Loading state on initial load, never when switching categories
         if (meta.isLoadingInitial && products.catalog.isEmpty() && meta.error == null) {
             ProductsUiState.Loading
         } else if (meta.error != null && products.catalog.isEmpty() && products.selectedCategory == null) {
@@ -291,6 +306,23 @@ class ProductsViewModel @Inject constructor(
 
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
+        if (query.isNotBlank() && query.length >= 2) {
+            viewModelScope.launch {
+                saveSearchHistoryUseCase(query.trim())
+            }
+        }
+    }
+
+    fun clearSearchHistory() {
+        viewModelScope.launch {
+            clearSearchHistoryUseCase()
+        }
+    }
+
+    fun deleteSearchHistory(id: String) {
+        viewModelScope.launch {
+            deleteSearchHistoryUseCase(id)
+        }
     }
 
     fun toggleFavorite(productId: Int) {
