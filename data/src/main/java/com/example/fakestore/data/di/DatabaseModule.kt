@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.example.fakestore.data.local.room.FakeStoreDatabase
 import com.example.fakestore.data.local.room.ProductDao
+import com.example.fakestore.data.local.dao.MessageDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -35,5 +36,13 @@ object DatabaseModule {
         database: FakeStoreDatabase
     ): ProductDao {
         return database.productDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideMessageDao(
+        database: FakeStoreDatabase
+    ): MessageDao {
+        return database.messageDao()
     }
 }

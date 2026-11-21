@@ -50,7 +50,7 @@ enum class BottomTab(
     ),
     MELI(
         route = "llm",
-        title = "Meli AI",
+        title = "AI",
         selectedIcon = Icons.Filled.AutoAwesome,
         unselectedIcon = Icons.Outlined.AutoAwesome
     ),

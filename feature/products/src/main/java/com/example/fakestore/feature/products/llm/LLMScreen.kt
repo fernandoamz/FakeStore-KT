@@ -90,6 +90,7 @@ fun LLMScreen(
     var inputText by remember { mutableStateOf("") }
     val isKeyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     val listState = rememberLazyListState()
+    val messages by viewModel.dbMessages.collectAsStateWithLifecycle()
 
     val startVoiceInput = rememberVoiceInputLauncher(
         onResult = { spoken ->
@@ -108,9 +109,9 @@ fun LLMScreen(
     }
 
     LaunchedEffect(uiState.messages.size, uiState.isSending) {
-        if (uiState.messages.isNotEmpty() || uiState.isSending) {
+        if (messages.isNotEmpty() || uiState.isSending) {
             listState.animateScrollToItem(
-                index = (uiState.messages.size + if (uiState.isSending) 1 else 0).coerceAtLeast(1) - 1
+                index = (messages.size + if (uiState.isSending) 1 else 0).coerceAtLeast(1) - 1
             )
         }
     }
@@ -154,7 +155,7 @@ fun LLMScreen(
                     .weight(1f)
                     .fillMaxWidth()
             ) {
-                if (uiState.showEmptyState) {
+                if (messages.isEmpty()) {
                     EmptyAssistantState(
                         suggestions = uiState.suggestions,
                         onSuggestionClick = ::handlePrompt,
@@ -162,7 +163,7 @@ fun LLMScreen(
                     )
                 } else {
                     ChatMessagesList(
-                        messages = uiState.messages,
+                        messages = messages,
                         isSending = uiState.isSending,
                         listState = listState,
                         modifier = Modifier.fillMaxSize()

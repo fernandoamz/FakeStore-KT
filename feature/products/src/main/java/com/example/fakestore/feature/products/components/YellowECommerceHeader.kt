@@ -1,11 +1,8 @@
 package com.example.fakestore.feature.products.components
 
 import android.util.Log
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -39,10 +36,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -63,6 +62,13 @@ fun YellowECommerceHeader(
     onCameraClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    // Smooth GPU-accelerated collapse progress (0f = expanded, 1f = collapsed)
+    val collapseProgress by animateFloatAsState(
+        targetValue = if (isCollapsed) 1f else 0f,
+        animationSpec = spring(stiffness = 300f, dampingRatio = 0.8f),
+        label = "headerCollapse"
+    )
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -71,127 +77,28 @@ fun YellowECommerceHeader(
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Top Row: Avatar, Search Input, Standalone Camera Button, Notification Bell
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            // User Profile Avatar / Initials
-            Surface(
-                onClick = onProfileClick,
-                shape = CircleShape,
-                color = Color.Black.copy(alpha = 0.12f),
-                modifier = Modifier.size(36.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "FA",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-                }
-            }
+        // Top Search Row (Always stable & pinned)
+        TopSearchRow(
+            searchQuery = searchQuery,
+            onSearchQueryChange = onSearchQueryChange,
+            onProfileClick = onProfileClick,
+            onCameraClick = onCameraClick,
+            onNotificationClick = onNotificationClick
+        )
 
-            // Search Input with rounded corners & search icon
-            Surface(
-                shape = RoundedCornerShape(24.dp),
-                color = Color.White,
-                shadowElevation = 1.dp,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(42.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 12.dp),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Buscar",
-                            tint = Color.Gray,
-                            modifier = Modifier.size(20.dp)
-                        )
-
-                        Box(
-                            modifier = Modifier.weight(1f),
-                            contentAlignment = Alignment.CenterStart
-                        ) {
-                            if (searchQuery.isEmpty()) {
-                                Text(
-                                    text = "Buscar en Fake Store",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.Gray
-                                )
-                            }
-                            BasicTextField(
-                                value = searchQuery,
-                                onValueChange = onSearchQueryChange,
-                                singleLine = true,
-                                textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.Black),
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Standalone Camera Icon Button (Independent touch target)
-            IconButton(
-                onClick = {
-                    Log.d("YellowECommerceHeader", "Camera icon clicked!")
-                    onCameraClick()
-                },
-                modifier = Modifier.size(38.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CameraAlt,
-                    contentDescription = "Escanear",
-                    tint = Color.Black,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-
-            // Notification bell with badge count (e.g. 7)
-            IconButton(
-                onClick = onNotificationClick,
-                modifier = Modifier.size(38.dp)
-            ) {
-                BadgedBox(
-                    badge = {
-                        Badge(containerColor = Color.Red, contentColor = Color.White) {
-                            Text("7")
-                        }
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = "Notificaciones",
-                        tint = Color.Black
-                    )
-                }
-            }
-        }
-
-        // Sub-header Row & Category Bar (Collapsible on scroll)
-        AnimatedVisibility(
-            visible = !isCollapsed,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
+        // Subheader & Category Bar with GPU-accelerated alpha & translation (Zero layout jank)
+        if (collapseProgress < 1f) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(68.dp)
+                    .graphicsLayer {
+                        alpha = 1f - collapseProgress
+                        translationY = -collapseProgress * 30f
+                    },
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // Location / Postal Code Indicator matching reference style
+                // Location / Postal Code Indicator
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -214,77 +121,178 @@ fun YellowECommerceHeader(
                     )
                 }
 
-                // Category Bar: Horizontal scrollable row of text-based category chips/links with active bottom indicator line
-                val displayCategories = if (categories.isEmpty()) {
-                    listOf("Electronics", "Fashion", "Home", "Beauty", "Sports", "More")
-                } else {
-                    categories.map { it.replaceFirstChar { c -> c.uppercase() } }
-                }
+                // Category Bar: Stable curated categories
+                val displayCategories = listOf("Beauty", "Smartphones", "Laptops", "Furniture")
 
                 LazyRow(
                     contentPadding = PaddingValues(vertical = 2.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // "All" category option
                     item {
                         val isAllSelected = selectedCategory == null
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .clickable { onCategorySelected(null) }
-                                .padding(vertical = 4.dp, horizontal = 2.dp)
-                        ) {
-                            Text(
-                                text = "All",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = if (isAllSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = DarkCharcoal.copy(alpha = if (isAllSelected) 1.0f else 0.8f)
-                            )
-                            Spacer(modifier = Modifier.height(3.dp))
-                            Box(
-                                modifier = Modifier
-                                    .height(2.5.dp)
-                                    .width(22.dp)
-                                    .background(
-                                        color = if (isAllSelected) DarkCharcoal else Color.Transparent,
-                                        shape = RoundedCornerShape(2.dp)
-                                    )
-                            )
-                        }
+                        CategoryChip(
+                            text = "All",
+                            isSelected = isAllSelected,
+                            onClick = { onCategorySelected(null) }
+                        )
                     }
 
                     items(displayCategories) { category ->
                         val isSelected = selectedCategory.equals(category, ignoreCase = true)
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .clickable {
-                                    onCategorySelected(if (isSelected) null else category.lowercase())
-                                }
-                                .padding(vertical = 4.dp, horizontal = 2.dp)
-                        ) {
-                            Text(
-                                text = category,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = DarkCharcoal.copy(alpha = if (isSelected) 1.0f else 0.8f)
-                            )
-                            Spacer(modifier = Modifier.height(3.dp))
-                            Box(
-                                modifier = Modifier
-                                    .height(2.5.dp)
-                                    .width(28.dp)
-                                    .background(
-                                        color = if (isSelected) DarkCharcoal else Color.Transparent,
-                                        shape = RoundedCornerShape(2.dp)
-                                    )
-                            )
-                        }
+                        CategoryChip(
+                            text = category,
+                            isSelected = isSelected,
+                            onClick = { onCategorySelected(if (isSelected) null else category.lowercase()) }
+                        )
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun TopSearchRow(
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onProfileClick: () -> Unit,
+    onCameraClick: () -> Unit,
+    onNotificationClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Surface(
+            onClick = onProfileClick,
+            shape = CircleShape,
+            color = Color.Black.copy(alpha = 0.12f),
+            modifier = Modifier.size(36.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text = "FA",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+            }
+        }
+
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = Color.White,
+            shadowElevation = 1.dp,
+            modifier = Modifier
+                .weight(1f)
+                .height(42.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Buscar",
+                        tint = Color.Gray,
+                        modifier = Modifier.size(20.dp)
+                    )
+
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        if (searchQuery.isEmpty()) {
+                            Text(
+                                text = "Buscar en Fake Store",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.Gray
+                            )
+                        }
+                        BasicTextField(
+                            value = searchQuery,
+                            onValueChange = onSearchQueryChange,
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.Black),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+        }
+
+        IconButton(
+            onClick = {
+                Log.d("YellowECommerceHeader", "Camera icon clicked!")
+                onCameraClick()
+            },
+            modifier = Modifier.size(38.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.CameraAlt,
+                contentDescription = "Escanear",
+                tint = Color.Black,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+
+        IconButton(
+            onClick = onNotificationClick,
+            modifier = Modifier.size(38.dp)
+        ) {
+            BadgedBox(
+                badge = {
+                    Badge(containerColor = Color.Red, contentColor = Color.White) {
+                        Text("7")
+                    }
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = "Notificaciones",
+                    tint = Color.Black
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryChip(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clip(RoundedCornerShape(4.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp, horizontal = 2.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            color = DarkCharcoal.copy(alpha = if (isSelected) 1.0f else 0.8f)
+        )
+        Spacer(modifier = Modifier.height(3.dp))
+        Box(
+            modifier = Modifier
+                .height(2.5.dp)
+                .width(if (text == "All") 22.dp else 28.dp)
+                .background(
+                    color = if (isSelected) DarkCharcoal else Color.Transparent,
+                    shape = RoundedCornerShape(2.dp)
+                )
+        )
     }
 }

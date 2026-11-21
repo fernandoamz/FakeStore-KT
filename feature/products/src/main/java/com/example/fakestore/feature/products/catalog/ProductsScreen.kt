@@ -74,7 +74,6 @@ import com.example.fakestore.feature.products.components.BottomTab
 import com.example.fakestore.feature.products.components.HeroBanner
 import com.example.fakestore.feature.products.components.ProductCardSkeleton
 import com.example.fakestore.feature.products.components.RatingBar
-import com.example.fakestore.feature.products.components.RecommendedProductsCard
 import com.example.fakestore.feature.products.components.YellowECommerceHeader
 import kotlinx.coroutines.launch
 
@@ -85,8 +84,7 @@ fun ProductsScreen(
     cartViewModel: CartViewModel = hiltViewModel(),
     onProductClick: (Int) -> Unit,
     onTabSelected: (BottomTab) -> Unit,
-    onProfileClick: () -> Unit,
-    onCameraClick: () -> Unit = {}
+    onProfileClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val cartUiState by cartViewModel.uiState.collectAsStateWithLifecycle()
@@ -152,8 +150,7 @@ fun ProductsScreen(
                 },
                 onLocationClick = {
                     showAddressBottomSheet = true
-                },
-                onCameraClick = onCameraClick
+                }
             )
         },
         bottomBar = {
@@ -227,16 +224,6 @@ fun ProductsScreen(
                                     .padding(vertical = 4.dp)
                             ) {
                                 HeroBanner(
-                                    products = state.products,
-                                    onProductClick = onProductClick
-                                )
-                            }
-                        }
-
-                        // Recommended Products Slider Card as the first item of the product grid
-                        if (state.products.isNotEmpty()) {
-                            item(key = "recommended_slider_card") {
-                                RecommendedProductsCard(
                                     products = state.products,
                                     onProductClick = onProductClick
                                 )
