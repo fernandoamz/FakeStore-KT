@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.AddShoppingCart
@@ -69,6 +70,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.example.fakestore.domain.model.Product
+import com.example.fakestore.feature.products.address.presentation.components.PostalCodeBottomSheet
 import com.example.fakestore.feature.products.cart.CartViewModel
 import com.example.fakestore.feature.products.components.BottomTab
 import com.example.fakestore.feature.products.components.HeroBanner
@@ -90,6 +92,7 @@ fun ProductsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val cartUiState by cartViewModel.uiState.collectAsStateWithLifecycle()
+    val searchHistory by viewModel.searchHistory.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
@@ -154,7 +157,18 @@ fun ProductsScreen(
                     showAddressBottomSheet = true
                 },
                 onCameraClick = onCameraClick,
-                onSearchClick = onSearchClick
+                onSearchClick = onSearchClick,
+                searchHistory = searchHistory,
+                onHistoryItemClick = { query ->
+                    viewModel.onSearchQueryChange(query)
+                },
+                onFavoritesClick = {
+                    viewModel.selectCategory("__FAVORITES__")
+                },
+                isFavoriteSelected = when (uiState) {
+                    is ProductsUiState.Success -> (uiState as ProductsUiState.Success).selectedCategory == "__FAVORITES__"
+                    else -> false
+                }
             )
         },
         bottomBar = {
@@ -315,149 +329,16 @@ fun ProductsScreen(
 
         // Transparent Action Sheet / Bottom Sheet with crisp black outline borders
         if (showAddressBottomSheet) {
-            val successState = uiState as? ProductsUiState.Success
-            ModalBottomSheet(
+            PostalCodeBottomSheet(
                 onDismissRequest = { showAddressBottomSheet = false },
-                sheetState = sheetState,
-                containerColor = Color.Transparent
-            ) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .padding(bottom = 24.dp),
-                    shape = RoundedCornerShape(28.dp),
-                    color = Color.White.copy(alpha = 0.96f),
-                    border = BorderStroke(1.5.dp, Color.Black),
-                    shadowElevation = 8.dp
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
-                    ) {
-                        // Title
-                        Text(
-                            text = "Elige una dirección",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
-                        )
-
-                        // Selected Address Item Row with black outline border
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = Color.Transparent,
-                            border = BorderStroke(1.dp, Color.Black),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(14.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                RadioButton(
-                                    selected = true,
-                                    onClick = {}
-                                )
-
-                                Column(
-                                    modifier = Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Text(
-                                            text = successState?.userAddress?.substringBefore(",") ?: "Calle Punta Caracol 9",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.Black
-                                        )
-
-                                        Surface(
-                                            shape = RoundedCornerShape(12.dp),
-                                            color = Color.Transparent,
-                                            border = BorderStroke(1.dp, Color.Black)
-                                        ) {
-                                            Text(
-                                                text = "Ubicación actual",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                fontWeight = FontWeight.Medium,
-                                                color = Color.Black,
-                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                            )
-                                        }
-                                    }
-
-                                    Text(
-                                        text = "CP: ${successState?.userZipcode ?: "28869"} - ${successState?.userAddress?.substringAfter(",")?.trim() ?: "Manzanillo, Colima"}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.DarkGray
-                                    )
-                                }
-
-                                IconButton(onClick = {}) {
-                                    Icon(
-                                        imageVector = Icons.Default.MoreVert,
-                                        contentDescription = "Más opciones",
-                                        tint = Color.Black
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Primary Button with black border
-                        Button(
-                            onClick = { showAddressBottomSheet = false },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF2563EB),
-                                contentColor = Color.White
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(1.dp, Color.Black),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp)
-                        ) {
-                            Text(
-                                text = "Confirmar",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        // Secondary Button with black border
-                        OutlinedButton(
-                            onClick = { showAddressBottomSheet = false },
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Color(0xFF2563EB),
-                                containerColor = Color.Transparent
-                            ),
-                            border = BorderStroke(1.5.dp, Color.Black),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp)
-                        ) {
-                            Text(
-                                text = "Agregar nueva dirección",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
+                onConfirmPostalCode = { code ->
+                    showAddressBottomSheet = false
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Código postal $code guardado")
                     }
-                }
-            }
+                },
+                sheetState = sheetState
+            )
         }
     }
 }

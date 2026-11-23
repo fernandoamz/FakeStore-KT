@@ -7,6 +7,7 @@ import com.example.fakestore.data.local.dao.ProductDao
 import com.example.fakestore.data.local.dao.MessageDao
 import com.example.fakestore.data.local.dao.SearchDao
 import com.example.fakestore.data.local.dao.CartDao
+import com.example.fakestore.data.local.dao.FavoriteDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -62,5 +63,13 @@ object DatabaseModule {
         database: FakeStoreDatabase
     ): CartDao {
         return database.cartDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideFavoriteDao(
+        database: FakeStoreDatabase
+    ): FavoriteDao {
+        return database.favoriteDao()
     }
 }

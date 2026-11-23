@@ -7,5 +7,7 @@
         <item name="postSplashScreenTheme">@style/Theme.FakeStore</item>
     </style>
 
-    <style name="Theme.FakeStore" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.FakeStore" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
 </resources>

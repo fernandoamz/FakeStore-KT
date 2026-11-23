@@ -30,10 +30,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
@@ -68,6 +70,8 @@ fun YellowECommerceHeader(
     onLocationClick: () -> Unit,
     onCameraClick: () -> Unit = {},
     onSearchClick: () -> Unit = {},
+    onFavoritesClick: () -> Unit = {},
+    isFavoriteSelected: Boolean = false,
     searchHistory: List<SearchHistory> = emptyList(),
     onHistoryItemClick: (String) -> Unit = {},
     onClearHistory: () -> Unit = {},
@@ -95,8 +99,54 @@ fun YellowECommerceHeader(
             onProfileClick = onProfileClick,
             onCameraClick = onCameraClick,
             onNotificationClick = onNotificationClick,
-            onSearchClick = onSearchClick
+            onSearchClick = onSearchClick,
+            onFavoritesClick = onFavoritesClick,
+            isFavoriteSelected = isFavoriteSelected
         )
+
+        // Recent Search Chips Row right under search bar when query is blank & history exists
+        if (searchQuery.isBlank() && searchHistory.isNotEmpty()) {
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                item {
+                    Text(
+                        text = "Recientes:",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = DarkCharcoal
+                    )
+                }
+                items(searchHistory, key = { it.id }) { history ->
+                    Surface(
+                        onClick = { onHistoryItemClick(history.query) },
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color.White,
+                        shadowElevation = 1.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.History,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = Color.Gray
+                            )
+                            Text(
+                                text = history.query,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = DarkCharcoal
+                            )
+                        }
+                    }
+                }
+            }
+        }
 
         // Subheader & Category Bar with GPU-accelerated alpha & translation (Zero layout jank)
         if (collapseProgress < 1f) {
@@ -141,7 +191,7 @@ fun YellowECommerceHeader(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     item {
-                        val isAllSelected = selectedCategory == null
+                        val isAllSelected = selectedCategory == null && !isFavoriteSelected
                         CategoryChip(
                             text = "All",
                             isSelected = isAllSelected,
@@ -170,7 +220,9 @@ private fun TopSearchRow(
     onProfileClick: () -> Unit,
     onCameraClick: () -> Unit,
     onNotificationClick: () -> Unit,
-    onSearchClick: () -> Unit
+    onSearchClick: () -> Unit,
+    onFavoritesClick: () -> Unit,
+    isFavoriteSelected: Boolean
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -229,6 +281,19 @@ private fun TopSearchRow(
                     )
                 }
             }
+        }
+
+        // Favorites Icon Button
+        IconButton(
+            onClick = onFavoritesClick,
+            modifier = Modifier.size(38.dp)
+        ) {
+            Icon(
+                imageVector = if (isFavoriteSelected) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                contentDescription = "Favoritos",
+                tint = if (isFavoriteSelected) Color.Red else Color.Black,
+                modifier = Modifier.size(22.dp)
+            )
         }
 
         IconButton(
