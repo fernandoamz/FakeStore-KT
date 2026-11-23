@@ -1,11 +1,10 @@
 package com.example.fakestore.navigation
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -16,6 +15,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.fakestore.MainViewModel
 import com.example.fakestore.domain.model.OrderResult
+import com.example.fakestore.feature.products.address.presentation.AddressFormScreen
+import com.example.fakestore.feature.products.address.presentation.PostalCodeScreen
 import com.example.fakestore.feature.products.auth.LoginScreen
 import com.example.fakestore.feature.products.auth.RegisterScreen
 import com.example.fakestore.feature.products.camera.CameraScreen
@@ -34,16 +35,6 @@ fun AppNavigation(
     mainViewModel: MainViewModel = hiltViewModel()
 ) {
     val isLoggedInState by mainViewModel.isLoggedIn.collectAsStateWithLifecycle()
-
-    if (isLoggedInState == null) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
-        }
-        return
-    }
 
     val navController = rememberNavController()
 
@@ -270,6 +261,21 @@ fun AppNavigation(
                         popUpTo("products") { inclusive = true }
                     }
                 }
+            )
+        }
+
+        composable("postal_code") {
+            PostalCodeScreen(
+                onBackClick = { navController.popBackStack() },
+                onProceedToForm = { pc -> navController.navigate("address_form/$pc") }
+            )
+        }
+        composable("address_form/{postalCode}") { entry ->
+            val pc = entry.arguments?.getString("postalCode").orEmpty()
+            AddressFormScreen(
+                initialPostalCode = pc,
+                onBackClick = { navController.popBackStack() },
+                onSaveSuccess = { navController.popBackStack() }
             )
         }
     }

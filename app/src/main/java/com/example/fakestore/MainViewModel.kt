@@ -14,11 +14,11 @@ class MainViewModel @Inject constructor(
     checkSessionUseCase: CheckSessionUseCase
 ) : ViewModel() {
 
-    val isLoggedIn: StateFlow<Boolean?> =
+    val isLoggedIn: StateFlow<Boolean> =
         checkSessionUseCase.isLoggedIn
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.Eagerly,
-                initialValue = null
+                initialValue = false
             )
 }

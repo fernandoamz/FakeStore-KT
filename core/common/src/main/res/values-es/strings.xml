@@ -1,0 +1,103 @@
+<resources>
+    <!-- General -->
+    <string name="app_name">Fake Store</string>
+    <string name="welcome">Bienvenido</string>
+    <string name="continue_btn">Continuar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="save">Guardar</string>
+    <string name="delete">Eliminar</string>
+    <string name="edit">Editar</string>
+    <string name="confirm">Confirmar</string>
+    <string name="loading">Cargando...</string>
+    <string name="retry">Reintentar</string>
+    <string name="search">Buscar</string>
+    <string name="close">Cerrar</string>
+    <string name="back">Volver</string>
+
+    <!-- Authentication -->
+    <string name="login">Iniciar Sesión</string>
+    <string name="register">Registrarse</string>
+    <string name="email">Correo electrónico</string>
+    <string name="password">Contraseña</string>
+    <string name="forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="logout">Cerrar Sesión</string>
+
+    <!-- Navigation / Bottom Tabs -->
+    <string name="navigation_home">Inicio</string>
+    <string name="navigation_videos">Videos</string>
+    <string name="navigation_cart">Carrito</string>
+    <string name="navigation_ai">IA</string>
+    <string name="navigation_profile">Perfil</string>
+
+    <!-- Catalog & Search -->
+    <string name="products">Productos</string>
+    <string name="categories">Categorías</string>
+    <string name="product_details">Detalles del Producto</string>
+    <string name="add_to_cart">Añadir al Carrito</string>
+    <string name="out_of_stock">Agotado</string>
+    <string name="price">Precio</string>
+    <string name="filters">Filtros</string>
+    <string name="sort_by">Ordenar por</string>
+    <string name="search_hint">Buscar en Fake Store</string>
+    <string name="recent_searches">Búsquedas recientes</string>
+    <string name="clear_all">Borrar todo</string>
+    <string name="scan">Escanear</string>
+    <string name="notifications">Notificaciones</string>
+    <string name="notifications_count">7 notificaciones nuevas</string>
+    <string name="no_favorites">No tienes productos favoritos aún</string>
+    <string name="no_products_found">No se encontraron productos</string>
+    <string name="loading_more_products">Cargando más productos...</string>
+    <string name="added_to_cart_msg">¡%1$s agregado al carrito!</string>
+    <string name="quick_add">Añadir rápido</string>
+
+    <!-- Shopping Cart -->
+    <string name="shopping_cart">Carrito de Compras</string>
+    <string name="cart_empty">Tu carrito está vacío</string>
+    <string name="quantity">Cantidad</string>
+    <string name="subtotal">Subtotal</string>
+    <string name="total">Total</string>
+    <string name="remove_item">Eliminar artículo</string>
+
+    <!-- Postal Code & Address -->
+    <string name="postal_code">Código Postal</string>
+    <string name="enter_postal_code">Ingresa tu código postal</string>
+    <string name="shipping_address">Dirección de Envío</string>
+    <string name="recipient_name">Nombre del destinatario</string>
+    <string name="street">Calle</string>
+    <string name="exterior_number">Número Exterior</string>
+    <string name="interior_number">Número Interior</string>
+    <string name="neighborhood">Colonia / Barrio</string>
+    <string name="city">Ciudad / Municipio</string>
+    <string name="state">Estado / Provincia</string>
+    <string name="delivery_instructions">Instrucciones de entrega</string>
+    <string name="save_address">Guardar Dirección</string>
+    <string name="invalid_postal_code">El código postal debe tener 5 dígitos</string>
+    <string name="choose_address">Elige una dirección</string>
+    <string name="current_location">Ubicación actual</string>
+    <string name="add_new_address">Agregar nueva dirección</string>
+    <string name="postal_code_title">¿Cuál es tu código postal?</string>
+    <string name="postal_code_subtitle">Ingresa tu código postal para consultar la disponibilidad de entrega y envío en tu zona.</string>
+    <string name="postal_code_placeholder">Ej. 28869</string>
+    <string name="postal_code_error">El código postal debe tener 5 dígitos</string>
+    <string name="postal_code_saved">Código postal %1$s guardado</string>
+    <string name="no_recent_searches">No tienes búsquedas recientes</string>
+    <string name="no_search_results">No se encontraron resultados para \"%1$s\"</string>
+
+    <!-- Formatting Arguments -->
+    <string name="welcome_user">Bienvenido, %1$s</string>
+    <string name="items_count">%1$d artículos</string>
+
+    <!-- Profile -->
+    <string name="profile_title">Mi Perfil</string>
+    <string name="verified_user">Usuario verificado</string>
+    <string name="personal_info">Información Personal</string>
+    <string name="phone">Teléfono</string>
+    <string name="primary_address">Dirección Principal</string>
+    <string name="address">Dirección</string>
+    <string name="language_settings">Idioma / Language</string>
+    <string name="select_language">Seleccionar idioma</string>
+    <string name="spanish">Español</string>
+    <string name="english">English</string>
+    <string name="unknown_error">Error desconocido</string>
+    <string name="changing_language">Cambiando idioma...</string>
+</resources>

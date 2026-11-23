@@ -1,0 +1,6 @@
+<resources>
+    <plurals name="cart_items_count">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
+</resources>

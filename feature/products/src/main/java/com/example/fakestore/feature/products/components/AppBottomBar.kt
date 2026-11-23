@@ -1,5 +1,6 @@
 package com.example.fakestore.feature.products.components
 
+import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Home
@@ -22,41 +23,43 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.fakestore.core.common.R
 
 enum class BottomTab(
     val route: String,
-    val title: String,
+    @StringRes val titleRes: Int,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 ) {
     HOME(
         route = "products",
-        title = "Inicio",
+        titleRes = R.string.navigation_home,
         selectedIcon = Icons.Filled.Home,
         unselectedIcon = Icons.Outlined.Home
     ),
     VIDEOS(
         route = "videos",
-        title = "Videos",
+        titleRes = R.string.navigation_videos,
         selectedIcon = Icons.Filled.PlayCircle,
         unselectedIcon = Icons.Outlined.PlayCircle
     ),
     CART(
         route = "cart",
-        title = "Carrito",
+        titleRes = R.string.navigation_cart,
         selectedIcon = Icons.Filled.ShoppingCart,
         unselectedIcon = Icons.Outlined.ShoppingCart
     ),
     MELI(
         route = "llm",
-        title = "AI",
+        titleRes = R.string.navigation_ai,
         selectedIcon = Icons.Filled.AutoAwesome,
         unselectedIcon = Icons.Outlined.AutoAwesome
     ),
     PROFILE(
         route = "profile",
-        title = "Perfil",
+        titleRes = R.string.navigation_profile,
         selectedIcon = Icons.Filled.Person,
         unselectedIcon = Icons.Outlined.Person
     )
@@ -79,13 +82,14 @@ fun AppBottomBar(
     ) {
         BottomTab.entries.forEach { tab ->
             val isSelected = currentRoute == tab.route
+            val title = stringResource(tab.titleRes)
 
             NavigationBarItem(
                 selected = isSelected,
                 onClick = { onTabSelected(tab) },
                 label = {
                     Text(
-                        text = tab.title,
+                        text = title,
                         style = MaterialTheme.typography.labelMedium,
                         color = if (isSelected) selectedColor else contentColor.copy(alpha = 0.7f)
                     )
@@ -104,14 +108,14 @@ fun AppBottomBar(
                         ) {
                             Icon(
                                 imageVector = icon,
-                                contentDescription = tab.title,
+                                contentDescription = title,
                                 tint = iconTint
                             )
                         }
                     } else {
                         Icon(
                             imageVector = icon,
-                            contentDescription = tab.title,
+                            contentDescription = title,
                             tint = iconTint
                         )
                     }
